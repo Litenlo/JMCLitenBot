@@ -5,8 +5,9 @@ absModule = function(_master) {
     self.name = "Abstract mobule";
     self.version = "1.0";
     self.description = "simple abstract module";
-    self.options = [];
-    self.api = [];
+    self.author = "unknown";
+    self.options = {};
+    self.api = {};
     self.modules = [];
     self.master = _master;
 
@@ -22,6 +23,7 @@ absModule = function(_master) {
         self.createOption("конфиг", "data/" + self.apiname + ".cfg", "файл конфигурации (не изменять)", "string");
 
         // restore config from file
+        //var savedConfig = {};
         var savedConfig = self.loadConfig();
         for (var name in savedConfig) {
             var optionInfo = savedConfig[name];
@@ -79,10 +81,14 @@ absModule = function(_master) {
         return null;
     }
 
+    self.clientOutputMobuleTitle = function() {
+        self.clientOutput("");
+        self.clientOutput(color("36;1") + self.name + " v"  + self.version + " by " + self.author);
+//        self.clientOutput("");
+    }
+
     self.showOptions = function() {
-        self.clientOutput("");
-        self.clientOutput(color("36;1") + self.name + " v"  + self.version);
-        self.clientOutput("");
+        self.clientOutputMobuleTitle();
         self.clientOutput(color("37;1") + "Настройки:");
         for (var name in self.options) {
             var optionInfo = self.options[name];
@@ -100,8 +106,7 @@ absModule = function(_master) {
     }
 
     self.showHelp = function() {
-        self.clientOutput("");
-        self.clientOutput(color("36;1") + self.name + " v"  + self.version);
+        self.clientOutputMobuleTitle();
         self.clientOutput(color("36") + self.description);
         self.clientOutput("");
 
@@ -122,6 +127,18 @@ absModule = function(_master) {
         }
 
         self.clientOutput("");
+    }
+
+    self.action = function(action) {
+        if (typeof action === "string") {
+            if (action.charAt(0) === "~") {
+                self.master.parseInput(action.substr(1));
+            } else {
+                jmc.parse(action);
+            }
+        } else {
+            action();
+        }
     }
 
     self.parseInput = function(_text) {
@@ -152,6 +169,10 @@ absModule = function(_master) {
                 }
             }
             return null;
+        }
+        for (var i = 0; i < self.modules.length && _text; i++) {
+            var moduleInfo = self.modules[i];
+            _text = moduleInfo.module.parseInput(_text);
         }
         return _text;
     }

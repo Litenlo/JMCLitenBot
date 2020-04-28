@@ -36,11 +36,53 @@ function include(fileName)
 {
 	if (fileSystem.FileExists(fileName)){
 		var jsFile = fileSystem.OpenTextFile(fileName, FD_READ);
-		eval(jsFile.ReadAll());
+
+        try {
+            eval(jsFile.ReadAll());
+        } catch (e) {
+            for (var v in e) {
+                log(gurmStringify(e));
+            }
+        }
+
 		log("file " + fileName + " included");
 	} else {
 		log("file " + fileName + " doesn't exist");
 	}
+}
+
+function jsonStringify(arr) {
+    var parts = [];
+    var is_list = (Object.prototype.toString.apply(arr) === '[object Array]');
+    for(var key in arr) {
+        var value = arr[key];
+        if(typeof value == "object") { //Custom handling for arrays
+            if(is_list) parts.push(jsonStringify(value)); /* :RECURSION: */
+            else parts.push("'" + key + "':" + jsonStringify(value)); /* :RECURSION: */
+            //else parts[key] = array2json(value); /* :RECURSION: */
+
+        } else {
+            var str = "";
+            if(!is_list) str = "'" + key + "':";
+
+            //Custom handling for multiple data types
+            if(typeof value == "number") str += value; //Numbers
+            else if(value === false) str += 'false'; //The booleans
+            else if(value === true) str += 'true';
+            else str += "'" + value.replace("'", "\'") + "'"; //All other things
+
+            parts.push(str);
+        }
+    }
+    var json = parts.join(",\n");
+
+    if(is_list) return '[\n' + json + '\n]';//Return numerical JSON
+    return '{\n' + json + '\n}';//Return associative JSON
+}
+
+function jsonParse(_json) {
+    log(_json);
+    return eval("(" + _json + ")");
 }
 
 var gurmDelimiter = " >>>>> ";
@@ -69,24 +111,47 @@ function gurmParse(_arr) {
 
 function writeObjToFile(_fileName, _obj) {
    	var	file = fileSystem.FileExists(_fileName) ? fileSystem.OpenTextFile(_fileName,FD_WRITE) : fileSystem.CreateTextFile(_fileName,true);
+    //file.WriteLine(jsonStringify(_obj));
     file.WriteLine(gurmStringify(_obj));
 	file.Close();
 }
 
+// function readObjectFromFile(_filename) {
+//     var result = "";
+//     if (fileSystem.FileExists(_filename)) {
+//         var	file = fileSystem.OpenTextFile(_filename, FD_READ);
+//
+//         while (file.AtEndOfStream === false) {
+//             var str = file.ReadLine();
+//             result = result + str;
+//         }
+//         file.Close();
+//     }
+//     return result.length > 0 ? jsonParse(result, 0) : [];
+// }
+
 function readObjectFromFile(_filename) {
     var result = [];
     if (fileSystem.FileExists(_filename)) {
-       	var	file = fileSystem.OpenTextFile(_filename, FD_READ);
+        var	file = fileSystem.OpenTextFile(_filename, FD_READ);
 
-		while (file.AtEndOfStream === false) {
-			var str = file.ReadLine();
-			result.push(str);
-		}
-		file.Close();
+        while (file.AtEndOfStream === false) {
+            var str = file.ReadLine();
+            result.push(str);
+        }
+        file.Close();
     }
     pos = 0;
-	return result.length > 0 ? gurmParse(result, 0) : [];
+    return result.length > 0 ? gurmParse(result, 0) : [];
 }
 
+function findInArray(_arr, _str) {
+    for (var i = 0; i < _arr.length; i++) {
+        if (_arr[i] === _str) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 include("js/main.js");

@@ -4,7 +4,8 @@
     self.apiname = "таймер";
     self.name = "Liten bot: timers";
     self.version = "1.0";
-    self.description = "Работа с глобальными таймерами. Полезно для периодических действий."
+    self.description = "Работа с глобальными таймерами. Полезно для периодических действий.";
+    self.author = "Литьен";
 
     var timers = [];
 
@@ -53,15 +54,7 @@
         var timerId = jmc.Event;
         if (timers[timerId] !== undefined ) {
             var action = timers[timerId].fnc;
-            if (typeof action === "string") {
-                if (action.charAt(0) === "~") {
-                    self.master.parseInput(action.substr(1));
-                } else {
-                    jmc.parse(action);
-                }
-            } else {
-                action();
-            }
+            self.action(action);
             if (self.getOption("сраб_показ") === "да") {
                 self.clientOutputNamed("Сработал таймер '" + timerId + "'.");
             }
