@@ -9,6 +9,7 @@ absModule = function(_master) {
     self.options = {};
     self.api = {};
     self.modules = [];
+    self.receivers = [];
     self.master = _master;
 
     self.createOption = function(_name, _value, _description, _type) {
@@ -36,7 +37,7 @@ absModule = function(_master) {
     }
 
     self.clientOutputNamed = function(_text) {
-        jmc.showme("[" + self.name + "] " + _text);
+        jmc.showme(color("30;1") + "[" + self.name + "] " + _text);
     }
 
     self.registerApi = function(_name, _reg, _function, _desc){
@@ -46,6 +47,27 @@ absModule = function(_master) {
             fnc: _function,
             desc: _desc
         };
+    }
+
+    //  регистрирует нового слушателя
+    self.registerReceiver = function(_message, _fnc) {
+        self.receivers[_message] = _fnc;
+        self.master.addListener(_message, self);
+    }
+    //  удаляем слушателя
+    self.removeReceiver = function(_message) {
+        delete self.receivers[_message];
+        self.master.removeListener(_message, self);
+    }
+
+    //  обрабатывает входящие сообщения и передаёт их обработчику
+    self.receiveMessage = function(_message, _content) {
+        if (self.receivers[_message] === undefined) {
+            self.clientOutputNamed("Не зарегистрирован обработчик для сообщения '" + _message + "'.");
+            return;
+        }
+        var fnc = self.receivers[_message];
+        fnc(_message, _content);
     }
 
     self.saveConfig = function() {
@@ -81,10 +103,10 @@ absModule = function(_master) {
         return null;
     }
 
-    self.clientOutputMobuleTitle = function() {
+    self.clientOutputMobuleTitle = function(_text) {
         self.clientOutput("");
         self.clientOutput(color("36;1") + self.name + " v"  + self.version + " by " + self.author);
-//        self.clientOutput("");
+        self.clientOutput(_text);
     }
 
     self.showOptions = function() {
