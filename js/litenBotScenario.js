@@ -58,7 +58,8 @@ litenBotScenario = function(_master) {
         //  работа с мобами
         self.registerApi("мдоб", /мдоб (.+) == (.+), (.+), (и|у)/, self.addMob, "добавить нового моба.");
         self.registerApi("муд", /муд (.+)/, self.deleteMob, "удалить моба.");
-        self.registerApi("мизм", /мизм (.+) == (.+), (.+), (и|у)/, self.mobOptions, "настройки моба.");
+        self.registerApi("мизм", /мизм (.+) == (.+), (.+), (и|у)/, self.editMob, "редактирование моба.");
+        self.registerApi("мопц", /мопц (.+) == (и|у)/, self.mobOptions, "настройки моба.");
         self.registerApi("мспис", /мспис/, self.mobList, "список мобов выбранной зоны.");
         self.registerApi("мочис", /мочис/, self.clearMobList, "очищает список мобов выбранной зоны.");
 
@@ -140,8 +141,8 @@ litenBotScenario = function(_master) {
         self.clientOutputNamed("В сценарий '" + curScenario + "' добавлен моб '" + _disp + "'.")
     }
 
-    // изменяет настройки моба
-    self.mobOptions = function(_disp, _real, _shortName, _option) {
+    // изменяет моба
+    self.editMob = function(_disp, _real, _shortName, _option) {
         _disp = _disp.trim();
         if (curScenario === undefined) {
             self.clientOutputNamed("Выберите сценарий для добавления моба.");
@@ -154,6 +155,21 @@ litenBotScenario = function(_master) {
         mobs[curScenario][_disp] = {real: _real, shortName: _shortName, option: _option};
         self.saveScenario(curScenario);
         self.clientOutputNamed("В сценарии '" + curScenario + "' изменён моб '" + _disp + "'.")
+    }
+    //  изменияет настройки моба
+    self.mobOptions = function(_disp, _option) {
+        _disp = _disp.trim();
+        if (curScenario === undefined) {
+            self.clientOutputNamed("Выберите сценарий для добавления моба.");
+            return;
+        }
+        if (mobs[curScenario][_disp] === undefined) {
+            self.clientOutputNamed("В сценарии '" + curScenario + "' нет моба '" + _disp + "'.")
+            return;
+        }
+        mobs[curScenario][_disp].option = _option;
+        self.saveScenario(curScenario);
+        self.clientOutputNamed("В сценарии '" + curScenario + "' изменён моб '" + _disp + "' опции '" + _option + "'.")
     }
 
     //  удаляет моба из сценария
