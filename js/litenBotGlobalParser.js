@@ -41,8 +41,11 @@ litenBotGlobalParser = function(_master) {
         hp: 0,
         mn: 0,
         mv: 0,
-        exp: 0
+        exp: 0,
+        coin: 0
     }
+
+    var inFight = false;
 
     var currentMob = {
         name: "", level: 0, prof: "", hp: 0, maxhp: 0, mn: 0, maxmn: 0, skills: "",
@@ -72,17 +75,21 @@ litenBotGlobalParser = function(_master) {
 
         //  другие методы вызываемые при создании моделя
         //  состояние
-        self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)C/, self.psPrompt, false, parseMode.ALWAYS, "Состояние");
+        self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, parseMode.ALWAYS, "Состояние");
+        self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psFightPrompt, false, parseMode.ALWAYS, "СтатусБитвы");
+
+        //  ошибки
+        self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, parseMode.ALWAYS, "ОшибкаДвиженияБоя");
 
         var group = "";
         //  room
         group = "Комната";
-        self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)C/, self.psPrompt, false, parseMode.ALWAYS, group);
+        self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, parseMode.ALWAYS, group);
         self.registerParser(/^\u001b\[1;36m(.+)/, self.psRoomName, true, parseMode.REGULAR, group);
         self.registerParser(/(.+)/, self.psRoomText, false, parseMode.ROOM, group);
-        self.registerParser(/^\u001b\[36m\[ Exits: (.+) ]/, self.psRoomExits, true, parseMode.ROOM, group);
+        self.registerParser(/^\u001b\[0;36m\[ Exits: (.+) ]/, self.psRoomExits, true, parseMode.ROOM, group);
         self.registerParser(/^\u001b\[1;33m(.+)/, self.psItemsStart, true, parseMode.DESCEND, group);
-        self.registerParser(/^\u001b\[31m(.+)/, self.psMobsStart, true, parseMode.ITEMS, group);
+        self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, parseMode.ITEMS, group);
         self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, parseMode.DESCEND, group);
         self.registerParser(/(.+)/, self.psMobInRoom, false, parseMode.MOBS, group);
         self.registerParser(/(.+)/, self.psItemInRoom, false, parseMode.ITEMS, group);
@@ -97,6 +104,10 @@ litenBotGlobalParser = function(_master) {
         self.master.addMessage(self, "Комната");
         self.master.addMessage(self, "Моб");
         self.master.addMessage(self, "Состояние");
+        self.master.addMessage(self, "СтатусБитвы");
+        self.master.addMessage(self, "ОшибкаДвиженияБоя");
+
+
 
         //  регистрируем события
         self.registerTransition(parseMode.DESCEND, parseMode.REGULAR, self.transitionRoomEnd);
@@ -143,6 +154,10 @@ litenBotGlobalParser = function(_master) {
             atMode: _atMode === undefined ? parseMode.ALWAYS : _atMode,
             group: _group === undefined ? "Общее" : _group
         });
+    }
+    //  parse move error in fight
+    self.psFightMoveError = function() {
+        self.master.sendMessage("ОшибкаДвиженияБоя", true);
     }
     //  mob parsers
     self.psMobName = function(_name) {
@@ -198,13 +213,28 @@ litenBotGlobalParser = function(_master) {
         self.setMode(parseMode.REGULAR);
     }
 
-    self.psPrompt = function(_hp, _mn, _mv, _exp, _meg) {
+    // устанавливаем статус битвы
+    self.setInFight = function(_value) {
+        if (inFight !== _value) {
+            inFight = _value;
+            self.master.sendMessage("СтатусБитвы", inFight);
+        }
+    }
+    //  разбор строки состояния боя
+    self.psFightPrompt = function(_hp, _mn, _mv, _exp, _meg, coin, _other) {
+        self.setInFight(_other.indexOf("[") > -1);
+    }
+
+    //  разбор строки состояния
+    self.psPrompt = function(_hp, _mn, _mv, _exp, _meg, coin, _other) {
         self.setMode(parseMode.REGULAR);
 
         player.hp = _hp;
         player.mn = _mn;
         player.mv = _mv;
         player.exp = (_meg === "M" ? _exp * 1000 : _exp);
+        player.coin = coin;
+        self.master.sendMessage("Состояние", player);
     }
 
     //  обработка входящих сообщений
