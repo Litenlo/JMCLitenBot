@@ -76,6 +76,7 @@ litenBotScenario = function (_master) {
         self.registerApi("выпол", /выпол (\S+)/, self.run, "выполнить сценарий.");
         self.registerApi("кдоб", /кдоб (\d+)?(.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА (НОМЕР_В_СПИСКЕ - не обязательный). Пример: лит.сц.кдоб 10 уд капитан - добавит команду 'уд капитан' в сценарий на 10 позицию.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
+        self.registerApi("прер", /прер/, self.scnBreak, "прерывает выполнения сценария. Пример: лит.сц.прер");
 
         self.registerApi("жд", /жд (\S+)/, self.botWait, "пауза в сценарии - значение * тм_бот_скор.");
         self.registerApi("тик", /тик/, self.tick, "тик бота.");
@@ -390,22 +391,41 @@ litenBotScenario = function (_master) {
         } while (self.instantAction(cmd) && curScenarioPosition < scenario.length);
 
         if (curScenarioPosition >= scenario.length) {
-            mode = SC_MODE.READY;
-            self.removeReceiver("Комната");
-            self.removeReceiver("Состояние");
-            self.removeReceiver("СтатусБитвы");
-            //self.removeReceiver("ОшибкаДвиженияБоя");
-            self.removeReceiver("ОшибкаНетМобаАгро");
-
-            self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
-
-            self.clientOutputMobuleTitle();
-            self.clientOutputNamed("Сценарий '" + curScenario + "' выполнен.")
-            self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp));
-            self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin));
+            self.scnFinish();
         }
     }
 
+    //  завершить выполнение сценария
+    self.scnFinish = function() {
+        self.scnClose();
+
+        self.clientOutputMobuleTitle();
+        self.clientOutputNamed("Сценарий '" + curScenario + "' выполнен.");
+        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp));
+        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin));
+    }
+    //  прервать выполнения сценария
+    self.scnBreak = function() {
+        self.scnClose();
+
+        self.clientOutputMobuleTitle();
+        self.clientOutputNamed("Сценарий '" + curScenario + "' прерван.");
+        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp));
+        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin));
+    }
+    // заканчиваем работу со сценарием
+    self.scnClose = function() {
+        mode = SC_MODE.READY;
+        self.removeReceiver("Комната");
+        self.removeReceiver("Состояние");
+        self.removeReceiver("СтатусБитвы");
+        //self.removeReceiver("ОшибкаДвиженияБоя");
+        self.removeReceiver("ОшибкаНетМобаАгро");
+
+        self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
+    }
+
+    //  требует ли команда получение ввода
     self.instantAction = function(_action) {
         return !regexp(notInstantActionRX, _action);
     }
