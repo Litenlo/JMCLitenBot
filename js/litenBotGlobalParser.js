@@ -80,6 +80,7 @@ litenBotGlobalParser = function(_master) {
 
         //  ошибки
         self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, parseMode.ALWAYS, "ОшибкаДвиженияБоя");
+        self.registerParser(/^Кого вы хотите ударить\?/, self.psNoAtackMobError, false, parseMode.ALWAYS, "ОшибкаНетМобаАгро");
 
         var group = "";
         //  room
@@ -106,8 +107,7 @@ litenBotGlobalParser = function(_master) {
         self.master.addMessage(self, "Состояние");
         self.master.addMessage(self, "СтатусБитвы");
         self.master.addMessage(self, "ОшибкаДвиженияБоя");
-
-
+        self.master.addMessage(self, "ОшибкаНетМобаАгро");
 
         //  регистрируем события
         self.registerTransition(parseMode.DESCEND, parseMode.REGULAR, self.transitionRoomEnd);
@@ -154,6 +154,11 @@ litenBotGlobalParser = function(_master) {
             atMode: _atMode === undefined ? parseMode.ALWAYS : _atMode,
             group: _group === undefined ? "Общее" : _group
         });
+    }
+
+    //  parse move error in fight
+    self.psNoAtackMobError = function() {
+        self.master.sendMessage("ОшибкаНетМобаАгро", true);
     }
     //  parse move error in fight
     self.psFightMoveError = function() {

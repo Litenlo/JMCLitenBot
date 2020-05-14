@@ -74,6 +74,7 @@ litenBotScenario = function (_master) {
         self.registerApi("показ", /показ/, self.show, "показать команды текущего сценария.");
         self.registerApi("удал", /удал (\S+)/, self.del, "удалить сценарий. Подтверждение не запрашивается. Файл сценария не удаляется.");
         self.registerApi("выпол", /выпол (\S+)/, self.run, "выполнить сценарий.");
+        self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
 
         self.registerApi("жд", /жд (\S+)/, self.botWait, "пауза в сценарии - значение * тм_бот_скор.");
         self.registerApi("тик", /тик/, self.tick, "тик бота.");
@@ -130,6 +131,11 @@ litenBotScenario = function (_master) {
         mobParseMode = false;
     }
 
+    //  посмотреть комнату
+    self.doLook = function() {
+        jmc.parse("смотреть");
+    }
+
     //  обработка новой комнаты
     self.roomReady = function (_message, _content) {
         currentRoom = _content;
@@ -162,7 +168,7 @@ litenBotScenario = function (_master) {
             for (var i = 0; i < roomMobs.length; i++) {
                 var displayMob = roomMobs[i].trim();
                 if (mobs[curScenario][displayMob] !== undefined && mobs[curScenario][displayMob].option === "у") {
-                    self.registerReceiver("СтатусБитвы", self.inFightChange);
+                    //self.registerReceiver("СтатусБитвы", self.inFightChange);
                     self.killMob(mobs[curScenario][displayMob].shortName);
                     return;
                 }
@@ -190,7 +196,7 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("В битве: " + _content);
         inFight = _content;
         if (!_content) {
-            self.removeReceiver("СтатусБитвы");
+            //self.removeReceiver("СтатусБитвы");
             jmc.parse("смотреть");
         }
     }
@@ -332,8 +338,9 @@ litenBotScenario = function (_master) {
 
         self.registerReceiver("Комната", self.roomReady);
         self.registerReceiver("Состояние", self.statusReady);
-        self.registerReceiver("ОшибкаДвиженияБоя", self.scenarioRollBackStep);
+        //self.registerReceiver("ОшибкаДвиженияБоя", self.scenarioRollBackStep);
         self.registerReceiver("СтатусБитвы", self.inFightChange);
+        self.registerReceiver("ОшибкаНетМобаАгро", self.doLook);
 
         if (self.canAct()) {
             self.scenarioNextStep();
@@ -377,7 +384,8 @@ litenBotScenario = function (_master) {
             self.removeReceiver("Комната");
             self.removeReceiver("Состояние");
             self.removeReceiver("СтатусБитвы");
-            self.removeReceiver("ОшибкаДвиженияБоя");
+            //self.removeReceiver("ОшибкаДвиженияБоя");
+            self.removeReceiver("ОшибкаНетМобаАгро");
 
             self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
 
@@ -506,6 +514,23 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("В сценарий '" + curScenario + "' добавлена команда '" + _command + "'.");
     }
 
+    //  удаляет команду из сценария
+    self.cmdDel = function(_pos) {
+        if (curScenario === undefined) {
+            self.clientOutputNamed("Выберите сценарий для добавления команды.");
+            return;
+        }
+
+        if (_pos > scenarios[curScenario]) {
+            self.clientOutputNamed("В сценарий '" + curScenario + "' нет команды с номером '" + _pos + "'.");
+            return;
+        }
+        var cmd = scenarios[curScenario][_pos - 1];
+        scenarios[curScenario].splice(_pos - 1, 1);
+        self.saveScenario(curScenario);
+        self.clientOutputNamed("В сценарий '" + curScenario + "' удалена команда с номером '" + _pos + "' ('" + cmd + "').");
+    }
+
     // список мобов в сценарии
     self.mobList = function () {
         if (curScenario === undefined) {
@@ -531,7 +556,7 @@ litenBotScenario = function (_master) {
         self.clientOutputMobuleTitle();
         self.clientOutput("Сценарий '" + curScenario + "':");
         for (var i = 0; i < scenarios[curScenario].length; i++) {
-            self.clientOutput(tab() + (i).toString().padStart(3) + ". " + scenarios[curScenario][i]);
+            self.clientOutput(tab() + (i + 1).toString().padStart(3) + ". " + scenarios[curScenario][i]);
         }
     }
     //  bot command section
