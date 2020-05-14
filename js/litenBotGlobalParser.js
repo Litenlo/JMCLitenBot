@@ -77,6 +77,7 @@ litenBotGlobalParser = function(_master) {
         //  состояние
         self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, parseMode.ALWAYS, "Состояние");
         self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psFightPrompt, false, parseMode.ALWAYS, "СтатусБитвы");
+        self.registerParser(/(.+) R.I.P./, self.psMobRIP, false, parseMode.ALWAYS, "РИП");
 
         //  ошибки
         self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, parseMode.ALWAYS, "ОшибкаДвиженияБоя");
@@ -108,6 +109,7 @@ litenBotGlobalParser = function(_master) {
         self.master.addMessage(self, "СтатусБитвы");
         self.master.addMessage(self, "ОшибкаДвиженияБоя");
         self.master.addMessage(self, "ОшибкаНетМобаАгро");
+        self.master.addMessage(self, "РИП");
 
         //  регистрируем события
         self.registerTransition(parseMode.DESCEND, parseMode.REGULAR, self.transitionRoomEnd);
@@ -228,6 +230,10 @@ litenBotGlobalParser = function(_master) {
     //  разбор строки состояния боя
     self.psFightPrompt = function(_hp, _mn, _mv, _exp, _meg, coin, _other) {
         self.setInFight(_other.indexOf("[") > -1);
+    }
+    //  разбор рипа моба
+    self.psMobRIP = function(_s) {
+        self.master.sendMessage("РИП", true);
     }
 
     //  разбор строки состояния

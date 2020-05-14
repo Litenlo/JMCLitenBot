@@ -35,6 +35,7 @@ litenBotScenario = function (_master) {
     var mobParseMode = false;
 
     var inFight = false;
+    var waitForLook = false;
     var inSubAction = false;
 
     var currentRoom = {};
@@ -136,11 +137,16 @@ litenBotScenario = function (_master) {
 
     //  посмотреть комнату
     self.doLook = function() {
-        jmc.parse("смотреть");
+        if (!waitForLook) {
+            jmc.parse("смотреть");
+            waitForLook = true;
+        }
     }
 
     //  обработка новой комнаты
     self.roomReady = function (_message, _content) {
+        waitForLook = false;
+
         currentRoom = _content;
         var roomMobs = currentRoom.mobs;
 
@@ -200,8 +206,12 @@ litenBotScenario = function (_master) {
         inFight = _content;
         if (!_content) {
             //self.removeReceiver("—татусЅитвы");
-            jmc.parse("смотреть");
+            self.doLook();
         }
+    }
+    //  обработка рипа в комнате
+    self.someoneRIP = function(_s) {
+        self.doLook();
     }
 
     self.killMob = function (_name) {
@@ -353,6 +363,7 @@ litenBotScenario = function (_master) {
         //self.registerReceiver("ќшибкаƒвижени€Ѕо€", self.scenarioRollBackStep);
         self.registerReceiver("—татусЅитвы", self.inFightChange);
         self.registerReceiver("ќшибкаЌетћобајгро", self.doLook);
+        self.registerReceiver("–»ѕ", self.someoneRIP);
 
         if (self.canAct()) {
             self.scenarioNextStep();
@@ -422,6 +433,7 @@ litenBotScenario = function (_master) {
         self.removeReceiver("—татусЅитвы");
         //self.removeReceiver("ќшибкаƒвижени€Ѕо€");
         self.removeReceiver("ќшибкаЌетћобајгро");
+        self.removeReceiver("–»ѕ");
 
         self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
     }
