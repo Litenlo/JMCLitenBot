@@ -74,6 +74,7 @@ litenBotScenario = function (_master) {
         self.registerApi("показ", /показ/, self.scnShow, "показать команды текущего сценария.");
         self.registerApi("удал", /удал (\S+)/, self.del, "удалить сценарий. Подтверждение не запрашивается. Файл сценария не удаляется.");
         self.registerApi("выпол", /выпол (\S+)/, self.run, "выполнить сценарий.");
+        self.registerApi("кдоб", /кдоб (\d+)?(.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА (НОМЕР_В_СПИСКЕ - не обязательный). Пример: лит.сц.кдоб 10 уд капитан - добавит команду 'уд капитан' в сценарий на 10 позицию.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
 
         self.registerApi("жд", /жд (\S+)/, self.botWait, "пауза в сценарии - значение * тм_бот_скор.");
@@ -508,20 +509,24 @@ litenBotScenario = function (_master) {
         curScenario = undefined;
     }
 
-    self.add = function (_command, _pos) {
+
+    self.cmdAdd = function (_pos, _command) {
         if (curScenario === undefined) {
             self.clientOutputNamed("Выберите сценарий для добавления команды.");
             return;
         }
 
-        if (_pos === undefined) {
+        _command = _command.trim();
+
+        if (_pos === "") {
             scenarios[curScenario].push(_command)
         } else {
-            scenarios[curScenario].splice(_pos, 0, _command)
+            scenarios[curScenario].splice(_pos - 1, 0, _command)
         }
         self.saveScenario(curScenario);
         self.clientOutputNamed("В сценарий '" + curScenario + "' добавлена команда '" + _command + "'.");
     }
+
 
     //  удаляет команду из сценария
     self.cmdDel = function(_pos) {
@@ -574,7 +579,7 @@ litenBotScenario = function (_master) {
 
             str = str + ((i + 1).toString().padStart(comPre) + ". " + scenarios[curScenario][i]).padEnd(comLen);
             counter++;
-            if (counter === comInLine) {
+            if (counter === comInLine || i + 1 === scenarios[curScenario].length) {
                 self.clientOutput(tab() + str);
                 str = "";
                 counter = 0;
@@ -594,7 +599,7 @@ litenBotScenario = function (_master) {
             return null;
         }
         if (mode === SC_MODE.CREATE) {
-            self.add(_text);
+            self.cmdAdd("", _text);
             if (_text.charAt(0) === "~") {
                 _text = "";
             }
