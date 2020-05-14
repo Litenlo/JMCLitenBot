@@ -71,7 +71,7 @@ litenBotScenario = function (_master) {
         self.registerApi("выб", /выб (\S+)/, self.select, "выбрать сценарий.");
         self.registerApi("созд", /созд (\S+)/, self.create, "начать создание нового сценария с указанным именем.");
         self.registerApi("стоп", /стоп/, self.stop, "завершить создание текущего сценария.");
-        self.registerApi("показ", /показ/, self.show, "показать команды текущего сценария.");
+        self.registerApi("показ", /показ/, self.scnShow, "показать команды текущего сценария.");
         self.registerApi("удал", /удал (\S+)/, self.del, "удалить сценарий. Подтверждение не запрашивается. Файл сценария не удаляется.");
         self.registerApi("выпол", /выпол (\S+)/, self.run, "выполнить сценарий.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
@@ -256,6 +256,21 @@ litenBotScenario = function (_master) {
         self.saveScenario(curScenario);
         self.clientOutputNamed("В сценарии '" + curScenario + "' изменён моб '" + _disp + "'.")
     }
+    //  получает возвращает имя моба по индексу
+    self.mobGetName = function(_disp) {
+        if (!isNaN(Number(_disp))) {
+            var mobIndex = Number(_disp);
+            var counter = 1;
+            for (var _key in mobs[curScenario]) {
+                if (counter === mobIndex) {
+                    return _key;
+                }
+                counter++;
+            }
+        }
+        return _disp;
+    }
+
     //  изменияет настройки моба
     self.mobOptions = function (_disp, _option) {
         _disp = _disp.trim();
@@ -269,16 +284,7 @@ litenBotScenario = function (_master) {
             return;
         }
 
-        if (!isNaN(Number(_disp))) {
-            var mobIndex = Number(_disp);
-            var counter = 1;
-            for (var _key in mobs[curScenario]) {
-                if (counter === mobIndex) {
-                    _disp = _key;
-                }
-                counter++;
-            }
-        }
+        _disp = self.mobGetName(_disp);
 
         if (_disp === "все") {
             for (var _key in mobs[curScenario]) {
@@ -302,10 +308,13 @@ litenBotScenario = function (_master) {
             self.clientOutputNamed("Выберите сценарий для удаления моба.");
             return;
         }
-        if (mobs[curScenario][_disp] === undefined) {
+        if ((isNaN(Number(_disp)) || Number(_disp) > mobs[curScenario].length) && mobs[curScenario][_disp] === undefined) {
             self.clientOutputNamed("В сценарии '" + curScenario + "' нет моб '" + _disp + "'.")
             return;
         }
+
+        _disp = self.mobGetName(_disp);
+
         delete mobs[curScenario][_disp];
         self.saveScenario(curScenario);
         self.clientOutputNamed("В сценарии '" + curScenario + "' удалён моб '" + _disp + "'.")
@@ -548,15 +557,28 @@ litenBotScenario = function (_master) {
     }
 
 
-    self.show = function () {
+    self.scnShow = function () {
+        var comInLine = 5;
+        var comLen = 20;
+        var comPre = 3;
+
         if (curScenario === undefined) {
             self.clientOutputNamed("Выберите сценарий.");
             return;
         }
         self.clientOutputMobuleTitle();
         self.clientOutput("Сценарий '" + curScenario + "':");
+        var counter = 0;
+        var str = "";
         for (var i = 0; i < scenarios[curScenario].length; i++) {
-            self.clientOutput(tab() + (i + 1).toString().padStart(3) + ". " + scenarios[curScenario][i]);
+
+            str = str + ((i + 1).toString().padStart(comPre) + ". " + scenarios[curScenario][i]).padEnd(comLen);
+            counter++;
+            if (counter === comInLine) {
+                self.clientOutput(tab() + str);
+                str = "";
+                counter = 0;
+            }
         }
     }
     //  bot command section
