@@ -77,6 +77,7 @@ litenBotScenario = function (_master) {
         self.registerApi("кдоб", /кдоб (\d+)?(.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА (НОМЕР_В_СПИСКЕ - не обязательный). Пример: лит.сц.кдоб 10 уд капитан - добавит команду 'уд капитан' в сценарий на 10 позицию.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
         self.registerApi("прер", /прер/, self.scnBreak, "прерывает выполнения сценария. Пример: лит.сц.прер");
+        self.registerApi("котм", /котм/, self.cmdUndo, "удаляет последнюю команду в режиме создания сценария.");
 
         self.registerApi("жд", /жд (\S+)/, self.botWait, "пауза в сценарии - значение * тм_бот_скор.");
         self.registerApi("тик", /тик/, self.tick, "тик бота.");
@@ -555,7 +556,7 @@ litenBotScenario = function (_master) {
             return;
         }
 
-        if (_pos > scenarios[curScenario]) {
+        if (_pos > scenarios[curScenario].length) {
             self.clientOutputNamed("В сценарий '" + curScenario + "' нет команды с номером '" + _pos + "'.");
             return;
         }
@@ -610,6 +611,15 @@ litenBotScenario = function (_master) {
     self.botWait = function (_time) {
         mode = SC_MODE.WAIT;
         waitTimer = parseInt(_time);
+    }
+
+    //  удаляет последнюю команду в режиме создания сценария
+    self.cmdUndo = function() {
+        if (mode !== SC_MODE.CREATE) {
+            self.clientOutputNamed("Вы должны быть в режиме создания сценария.");
+            return;
+        }
+        self.cmdDel(scenarios[curScenario].length);
     }
 
     var parentParseInput = self.parseInput;
