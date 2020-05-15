@@ -45,11 +45,13 @@ litenBotScenario = function (_master) {
         startCoin: 0,
         curExp: 0,
         curCoin: 0,
+        startTime: Date.now() / 1000 | 0,
         reset: function () {
-            startExp = 0;
-            startCoin = 0;
-            curExp = 0;
-            curCoin = 0;
+            this.startExp = 0;
+            this.startCoin = 0;
+            this.curExp = 0;
+            this.curCoin = 0;
+            this.startTime = Date.now() / 1000 | 0;
         }
     }
     //  конструктор
@@ -74,7 +76,7 @@ litenBotScenario = function (_master) {
         self.registerApi("стоп", /стоп/, self.stop, "завершить создание текущего сценария.");
         self.registerApi("показ", /показ/, self.scnShow, "показать команды текущего сценария.");
         self.registerApi("удал", /удал (\S+)/, self.del, "удалить сценарий. Подтверждение не запрашивается. Файл сценария не удаляется.");
-        self.registerApi("выпол", /выпол (\S+)/, self.run, "выполнить сценарий.");
+        self.registerApi("выпол", /выпол (\S+)/, self.scnRun, "выполнить сценарий. сц.выпол НАЗВАНИЕ_СЦЕНАРИЯ. Пример: лит.сц.выпол школа - запустит сценарий с названием 'школа'");
         self.registerApi("кдоб", /кдоб (\d+)?(.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА (НОМЕР_В_СПИСКЕ - не обязательный). Пример: лит.сц.кдоб 10 уд капитан - добавит команду 'уд капитан' в сценарий на 10 позицию.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
         self.registerApi("прер", /прер/, self.scnBreak, "прерывает выполнения сценария. Пример: лит.сц.прер");
@@ -345,7 +347,7 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("В сценарии '" + curScenario + "' очищен список мобов.")
     }
 
-    self.run = function (_name) {
+    self.scnRun = function (_name) {
         _name = _name === '' ? curScenario : _name;
         if (!self.select(_name)) {
             return false;
@@ -364,6 +366,7 @@ litenBotScenario = function (_master) {
         self.registerReceiver("СтатусБитвы", self.inFightChange);
         self.registerReceiver("ОшибкаНетМобаАгро", self.doLook);
         self.registerReceiver("РИП", self.someoneRIP);
+        self.registerReceiver("СражаетсяСВами", self.inFightChange);
 
         if (self.canAct()) {
             self.scenarioNextStep();
@@ -413,8 +416,10 @@ litenBotScenario = function (_master) {
 
         self.clientOutputMobuleTitle();
         self.clientOutputNamed("Сценарий '" + curScenario + "' выполнен.");
-        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp));
-        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin));
+        var secTime = ((Date.now() / 1000 | 0) - curScenStat.startTime);
+        self.clientOutputNamed("Время: " + secTime + " сек.");
+        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime) + " в секунду");
+        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime) + " в секунду");
     }
     //  прервать выполнения сценария
     self.scnBreak = function() {
@@ -422,8 +427,10 @@ litenBotScenario = function (_master) {
 
         self.clientOutputMobuleTitle();
         self.clientOutputNamed("Сценарий '" + curScenario + "' прерван.");
-        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp));
-        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin));
+        var secTime = ((Date.now() / 1000 | 0) - curScenStat.startTime);
+        self.clientOutputNamed("Время: " + secTime + " сек.");
+        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime) + " в секунду");
+        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime) + " в секунду");
     }
     // заканчиваем работу со сценарием
     self.scnClose = function() {
@@ -434,6 +441,8 @@ litenBotScenario = function (_master) {
         //self.removeReceiver("ОшибкаДвиженияБоя");
         self.removeReceiver("ОшибкаНетМобаАгро");
         self.removeReceiver("РИП");
+        self.removeReceiver("СражаетсяСВами");
+
 
         self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
     }
