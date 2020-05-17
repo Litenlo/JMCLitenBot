@@ -23,7 +23,7 @@ litenBotScenario = function (_master) {
     }
 
     //  собственные переменные
-    var notInstantActionRX = /^(смотреть|см|север|юг|запад|восток|вверх|вниз|с|ю|з|в|вв|вн|~лит.сц.жд (.+))$/
+    var notInstantActionRX = /^(войти|смотреть|см|север|юг|запад|восток|вверх|вниз|с|ю|з|в|вв|вн|~лит.сц.жд (.+))$/
     var scenarios = {};
     var mobs = {};
     var mode = SC_MODE.READY;
@@ -147,8 +147,6 @@ litenBotScenario = function (_master) {
 
     //  обработка новой комнаты
     self.roomReady = function (_message, _content) {
-        waitForLook = false;
-
         currentRoom = _content;
         var roomMobs = currentRoom.mobs;
 
@@ -164,6 +162,13 @@ litenBotScenario = function (_master) {
                 }
             }
         }
+
+        if (!waitForLook) {
+            return;
+        }
+        waitForLook = false;
+
+
         //  обработка режима "агрит всех"
         if (parseInt(killMode) === KILL_MODE.KILLALL) {
             //  todo: не обязательно будет видно строку статуса, иногда килл а один раунд
@@ -233,7 +238,7 @@ litenBotScenario = function (_master) {
         var parts = _content.name.split("> ");
         _content.name = parts.length === 1 ? _content.name : parts[1];
         /////
-        _content.shortName = _content.name.toLowerCase().replace(" ", ".");
+        _content.shortName = _content.name.toLowerCase().replace(/\s/g, ".");
         self.clientOutputNamed((currentMobIndex + 1) + " из " + newMobArray.length + ": " + newMobArray[currentMobIndex] + " => " + _content.shortName);
         self.addMob(newMobArray[currentMobIndex], _content.name, _content.shortName, "и")
         currentMobIndex++;
@@ -401,7 +406,9 @@ litenBotScenario = function (_master) {
         do {
             cmd = scenario[curScenarioPosition];
             self.clientOutputNamed("Сценарий '" + curScenario + "' команда: " + cmd + ".")
+            //self.action("вст");
             self.action(cmd);
+            waitForLook = !self.instantAction(cmd);
             curScenarioPosition++;
         } while (self.instantAction(cmd) && curScenarioPosition < scenario.length);
 
@@ -418,8 +425,8 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("Сценарий '" + curScenario + "' выполнен.");
         var secTime = ((Date.now() / 1000 | 0) - curScenStat.startTime);
         self.clientOutputNamed("Время: " + secTime + " сек.");
-        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime) + " в секунду");
-        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime) + " в секунду");
+        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
+        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
     }
     //  прервать выполнения сценария
     self.scnBreak = function() {
@@ -429,8 +436,8 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("Сценарий '" + curScenario + "' прерван.");
         var secTime = ((Date.now() / 1000 | 0) - curScenStat.startTime);
         self.clientOutputNamed("Время: " + secTime + " сек.");
-        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime) + " в секунду");
-        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime) + " в секунду");
+        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
+        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
     }
     // заканчиваем работу со сценарием
     self.scnClose = function() {
@@ -660,12 +667,12 @@ litenBotScenario = function (_master) {
 
     self.parseIncoming = function (_text) {
         //todo: надо бы чтобы парсинг был только на секции мобов
-        if (curScenario !== undefined) {
-            _cleartext = removeColor(_text).trim();
-            if (mobs[curScenario][_cleartext] !== undefined) {
-                _text = _text + " [" + mobs[curScenario][_cleartext].shortName + "]";
-            }
-        }
+        // if (curScenario !== undefined) {
+        //     _cleartext = removeColor(_text).trim();
+        //     if (mobs[curScenario][_cleartext] !== undefined) {
+        //         _text = _text + " [" + mobs[curScenario][_cleartext].shortName + "]";
+        //     }
+        // }
         return _text;
     }
 

@@ -1,13 +1,16 @@
 include("js/absMobule.js");
 include("js/litenBotMain.js");
 include("js/litenBotGlobalParser.js");
+include("js/litenBotGlobalParserSow.js");
+include("js/litenBotGlobalParserByl.js");
 include("js/litenBotTimers.js");
 include("js/litenBotPrayBot.js");
 include("js/litenBotScenario.js");
 
 newbot = new litenBotMain();
 
-parser = new litenBotGlobalParser(newbot);
+parserByl = new litenBotGlobalParserByl(newbot);
+//parserSow = new litenBotGlobalParserSow(newbot);
 timers = new litenBotTimers(newbot);
 praybot = new litenBotPrayBot(newbot);
 scenario = new litenBotScenario(newbot);
