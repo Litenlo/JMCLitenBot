@@ -20,6 +20,7 @@ litenBotGlobalParserByl = function(_master) {
         //  состояние
         self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, "Состояние");
         self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psFightPrompt, false, self.parseMode.ALWAYS, "СтатусБитвы");
+        self.registerParser(/сражается с ВАМИ!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
 
         //  другие методы вызываемые при создании модуля
         var group = "";

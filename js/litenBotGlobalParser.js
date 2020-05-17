@@ -78,7 +78,7 @@ litenBotGlobalParser = function(_master) {
         //self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, parseMode.ALWAYS, "Состояние");
         //self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psFightPrompt, false, parseMode.ALWAYS, "СтатусБитвы");
         self.registerParser(/(.+) R.I.P./, self.psMobRIP, false, self.parseMode.ALWAYS, "РИП");
-        self.registerParser(/сражается с вами!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
+        //self.registerParser(/сражается с вами!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
 
         //  ошибки
         self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, self.parseMode.ALWAYS, "ОшибкаДвиженияБоя");
@@ -139,7 +139,7 @@ litenBotGlobalParser = function(_master) {
 
     // изменяет текущий режим парсера, вызывает событие перехода, если таковое присутствует
     self.setMode = function(_newMode) {
-        log(self.mode + " -> " + _newMode);
+        //log(self.mode + " -> " + _newMode);
         if (self.mode !== _newMode) {
             if (self.transitions[self.mode] !== undefined && self.transitions[self.mode][_newMode]) {
                 var fnc = self.transitions[self.mode][_newMode];
@@ -259,7 +259,7 @@ litenBotGlobalParser = function(_master) {
 
     //  обработка входящих сообщений
     self.parseIncoming = function(_text) {
-        log(_text.replace("\u001b", ""));
+        //log(_text.replace("\u001b", ""));
         _cleartext = removeColor(_text);
         for (var i = 0; i < self.parsers.length; i++) {
             var parseInfo = self.parsers[i];
