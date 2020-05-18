@@ -456,6 +456,7 @@ litenBotScenario = function (_master) {
 
     //  требует ли команда получение ввода
     self.instantAction = function(_action) {
+        //log(!regexp(notInstantActionRX, _action));
         return !regexp(notInstantActionRX, _action);
     }
 

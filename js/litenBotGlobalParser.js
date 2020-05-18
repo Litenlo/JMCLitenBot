@@ -77,12 +77,12 @@ litenBotGlobalParser = function(_master) {
         //  состояние
         //self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, parseMode.ALWAYS, "Состояние");
         //self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psFightPrompt, false, parseMode.ALWAYS, "СтатусБитвы");
-        self.registerParser(/(.+) R.I.P./, self.psMobRIP, false, self.parseMode.ALWAYS, "РИП");
+        //self.registerParser(/(.+) R.I.P./, self.psMobRIP, false, self.parseMode.ALWAYS, "РИП");
         //self.registerParser(/сражается с вами!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
 
         //  ошибки
         self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, self.parseMode.ALWAYS, "ОшибкаДвиженияБоя");
-        self.registerParser(/^Кого вы хотите ударить\?/, self.psNoAtackMobError, false, self.parseMode.ALWAYS, "ОшибкаНетМобаАгро");
+        //self.registerParser(/^Кого вы хотите ударить\?/, self.psNoAtackMobError, false, self.parseMode.ALWAYS, "ОшибкаНетМобаАгро");
 
         var group = "";
         //  room
