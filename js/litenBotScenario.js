@@ -139,6 +139,7 @@ litenBotScenario = function (_master) {
 
     //  посмотреть комнату
     self.doLook = function() {
+        log(waitForLook);
         if (!waitForLook) {
             jmc.parse("смотреть");
             waitForLook = true;

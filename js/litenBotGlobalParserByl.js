@@ -19,7 +19,7 @@ litenBotGlobalParserByl = function(_master) {
 
         //  состояние
         self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, "Состояние");
-        self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psFightPrompt, false, self.parseMode.ALWAYS, "СтатусБитвы");
+        self.registerParser(/^(\d+)H (\d+)M (\d+)о (.+)/, self.psFightPrompt, false, self.parseMode.ALWAYS, "СтатусБитвы");
         self.registerParser(/сражается с ВАМИ!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
         self.registerParser(/(.+) душа медленно подымается в небеса./, self.psMobRIP, false, self.parseMode.ALWAYS, "РИП");
 
@@ -34,9 +34,10 @@ litenBotGlobalParserByl = function(_master) {
         self.registerParser(/^\u001b\[1;33m\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.ITEMS, group);
     }
     //  парсинг строки состояния боя
-    var parent_psFightPrompt = self.psPrompt;
-    self.psFightPrompt = function(_hp, _mv, _exp, _coin, _other) {
-        parent_psFightPrompt(_hp, 0, _mv, _exp, "", _coin, _other);
+    var parent_psFightPrompt = self.psFightPrompt;
+    self.psFightPrompt = function(_hp, _mv, _exp, _other) {
+        self.setMode(self.parseMode.REGULAR);
+        parent_psFightPrompt(_hp, 0, _mv, _exp, "", undefined, _other);
     }
 
     //  парсинг строки состояния
