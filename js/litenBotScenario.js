@@ -406,7 +406,7 @@ litenBotScenario = function (_master) {
 
         do {
             cmd = scenario[curScenarioPosition];
-            self.clientOutputNamed("Сценарий '" + curScenario + "' команда: " + cmd + ".")
+            self.clientOutputNamed("Сценарий '" + curScenario + "' команда: [" + (curScenarioPosition + 1) + "] " + cmd + ".")
             //self.action("вст");
             self.action(cmd);
             waitForLook = !self.instantAction(cmd);
@@ -426,8 +426,8 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("Сценарий '" + curScenario + "' выполнен.");
         var secTime = ((Date.now() / 1000 | 0) - curScenStat.startTime);
         self.clientOutputNamed("Время: " + secTime + " сек.");
-        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
-        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
+        self.clientOutputNamed("Опыт: " + numberWithSpaces(curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
+        self.clientOutputNamed("Монет: " + numberWithSpaces(curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
     }
     //  прервать выполнения сценария
     self.scnBreak = function() {
@@ -437,8 +437,8 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("Сценарий '" + curScenario + "' прерван.");
         var secTime = ((Date.now() / 1000 | 0) - curScenStat.startTime);
         self.clientOutputNamed("Время: " + secTime + " сек.");
-        self.clientOutputNamed("Опыт: " + (curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
-        self.clientOutputNamed("Монет: " + (curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
+        self.clientOutputNamed("Опыт: " + numberWithSpaces(curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
+        self.clientOutputNamed("Монет: " + numberWithSpaces(curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
     }
     // заканчиваем работу со сценарием
     self.scnClose = function() {
