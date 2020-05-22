@@ -9,8 +9,8 @@ include("js/litenBotScenario.js");
 
 newbot = new litenBotMain();
 
-parserByl = new litenBotGlobalParserByl(newbot);
-//parserSow = new litenBotGlobalParserSow(newbot);
+//parserByl = new litenBotGlobalParserByl(newbot);
+parserSow = new litenBotGlobalParserSow(newbot);
 timers = new litenBotTimers(newbot);
 praybot = new litenBotPrayBot(newbot);
 scenario = new litenBotScenario(newbot);

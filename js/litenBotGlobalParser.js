@@ -252,7 +252,7 @@ litenBotGlobalParser = function(_master) {
         self.player.hp = _hp;
         self.player.mn = _mn;
         self.player.mv = _mv;
-        self.player.exp = (_meg === "M" ? _exp * 1000 : _exp);
+        self.player.exp = (_meg === "M" ? _exp * 1000000 : _exp);
         self.player.coin = coin;
         self.master.sendMessage("Состояние", self.player);
     }
