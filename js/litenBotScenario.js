@@ -63,6 +63,7 @@ litenBotScenario = function (_master) {
         self.createOption("тм_бот", "200", "идентификатор таймера бота", "string");
         self.createOption("сч_ждать", "201", "идентификатор таймера для ожидания", "string");
         self.createOption("тм_бот_скор", "1", "скорость бота в десятый долях секунды", "string");
+        self.createOption("ком_атак", "к мас.вред", "команда для атаки", "string");
 
         //  вызов родительского конструктора
         parentConstructor();
@@ -79,7 +80,7 @@ litenBotScenario = function (_master) {
         self.registerApi("выпол", /выпол (\S+)/, self.scnRun, "выполнить сценарий. сц.выпол НАЗВАНИЕ_СЦЕНАРИЯ. Пример: лит.сц.выпол школа - запустит сценарий с названием 'школа'");
         self.registerApi("кдоб", /кдоб (\d+)?(.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА (НОМЕР_В_СПИСКЕ - не обязательный). Пример: лит.сц.кдоб 10 уд капитан - добавит команду 'уд капитан' в сценарий на 10 позицию.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
-        self.registerApi("кзам", /кзам (\d+) (\S+)/, self.cmdChange, "заменить команду под определённым номером. кзам НОМЕР_В_СПИСКЕ КОМАНДА. Пример: лит.сц.кзам 10 обл создать +2 - заменит команду под номером 10 на 'обл создать +2'.");
+        self.registerApi("кзам", /кзам (\d+) (.+)/, self.cmdChange, "заменить команду под определённым номером. кзам НОМЕР_В_СПИСКЕ КОМАНДА. Пример: лит.сц.кзам 10 обл создать +2 - заменит команду под номером 10 на 'обл создать +2'.");
         self.registerApi("прер", /прер/, self.scnBreak, "прерывает выполнения сценария. Пример: лит.сц.прер");
         self.registerApi("котм", /котм/, self.cmdUndo, "удаляет последнюю команду в режиме создания сценария.");
 
@@ -228,7 +229,7 @@ litenBotScenario = function (_master) {
             _name = _name + 2;
         }
         self.clientOutputNamed("Атакую моба '" + _name + "'");
-        jmc.parse("убить " + (_name))
+        jmc.parse(self.getOption("ком_атак") + " " + (_name));
     }
 
     //  обработка нового моба
@@ -407,7 +408,7 @@ litenBotScenario = function (_master) {
 
         do {
             cmd = scenario[curScenarioPosition];
-            self.clientOutputNamed("Сценарий '" + curScenario + "' команда: [" + (curScenarioPosition + 1) + "] " + cmd + ".")
+            self.clientOutputNamed("Сценарий '" + curScenario + "' команда: [" + (curScenarioPosition + 1) + " / " + scenario.length + "] " + cmd + ".")
             //self.action("вст");
             self.action(cmd);
             waitForLook = !self.instantAction(cmd);

@@ -13,9 +13,6 @@ litenBotGlobalParserSow = function(_master) {
     //  конструктор
     var parentConstructor = self.constructor;
     self.constructor = function() {
-        //  вызов родительского конструктора
-        parentConstructor();
-
         //  состояние
         self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, "Состояние");
         self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psFightPrompt, false, self.parseMode.ALWAYS, "СтатусБитвы");
@@ -30,6 +27,9 @@ litenBotGlobalParserSow = function(_master) {
         //  room
         group = "Комната";
         self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, group);
+
+        //  вызов родительского конструктора
+        parentConstructor();
     }
 
     //  вызов констурктор

@@ -126,6 +126,7 @@ litenBotGlobalParser = function(_master) {
     }
     //  переход от сбора данных о комнате к обычному состоянию
     self.transitionRoomEnd = function() {
+        log(gurmStringify(self.currentRoom));
         self.master.sendMessage("Комната", self.currentRoom);
     }
 
@@ -207,7 +208,10 @@ litenBotGlobalParser = function(_master) {
     self.psMobInRoom = function(_text) {
         _text = _text.split(" (")[0];
         _text = _text.split(" ...")[0];
-        self.currentRoom.mobs.push(_text);
+        _text = _text.trim();
+        if (_text !== "") {
+            self.currentRoom.mobs.push(_text);
+        }
     }
 
     self.psItemInRoom = function(_text) {
