@@ -229,6 +229,9 @@ litenBotScenario = function (_master) {
             _name = _name + 2;
         }
         self.clientOutputNamed("Атакую моба '" + _name + "'");
+
+        self.inFightChange("none", true);
+
         jmc.parse(self.getOption("ком_атак") + " " + (_name));
     }
 
