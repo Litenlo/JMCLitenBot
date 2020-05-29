@@ -80,6 +80,12 @@ litenBotGlobalParser = function(_master) {
         //self.registerParser(/(.+) R.I.P./, self.psMobRIP, false, self.parseMode.ALWAYS, "РИП");
         //self.registerParser(/сражается с вами!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
 
+
+        self.registerParser(/(^Вам лучше встать на ноги!)|(^Вы упали.)|(^Вы полетели на землю от мощного)|(сбил вас с ног!$)|(поставил вам подножку, и вы упали!$)/, self.psCharBash, false, self.parseMode.ALWAYS, "Сост.баш");
+        self.registerParser(/^Вы потеряли способность разговаривать./, self.psCharSilence, false, self.parseMode.ALWAYS, "Сост.молчание");
+        self.registerParser(/(^Вы ослепли!)|(^Раскаленное пламя обожгло ваши глаза!)/, self.psCharBlind, false, self.parseMode.ALWAYS, "Сост.слеп");
+        self.registerParser(/^Вы забились в судорогах./, self.psCharPoison, false, self.parseMode.ALWAYS, "Сост.яд");
+
         //  ошибки
         self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, self.parseMode.ALWAYS, "ОшибкаДвиженияБоя");
         //self.registerParser(/^Кого вы хотите ударить\?/, self.psNoAtackMobError, false, self.parseMode.ALWAYS, "ОшибкаНетМобаАгро");
@@ -112,6 +118,10 @@ litenBotGlobalParser = function(_master) {
         self.master.addMessage(self, "ОшибкаНетМобаАгро");
         self.master.addMessage(self, "РИП");
         self.master.addMessage(self, "СражаетсяСВами");
+        self.master.addMessage(self, "Сост.баш");
+        self.master.addMessage(self, "Сост.молчание");
+        self.master.addMessage(self, "Сост.слеп");
+        self.master.addMessage(self, "Сост.яд");
 
         //  регистрируем события
         self.registerTransition(self.parseMode.DESCEND, self.parseMode.REGULAR, self.transitionRoomEnd);
@@ -168,6 +178,22 @@ litenBotGlobalParser = function(_master) {
     //  parse move error in fight
     self.psFightMoveError = function() {
         self.master.sendMessage("ОшибкаДвиженияБоя", true);
+    }
+    //  parse silence string
+    self.psCharSilence = function() {
+        self.master.sendMessage("Сост.молчание", true);
+    }
+    //  parse blind string
+    self.psCharBlind = function() {
+        self.master.sendMessage("Сост.слеп", true);
+    }
+    //  parse poison string
+    self.psCharPoison = function() {
+        self.master.sendMessage("Сост.яд", true);
+    }
+    //  parse bash string
+    self.psCharBash = function() {
+        self.master.sendMessage("Сост.баш", true);
     }
     //  mob self.parsers
     self.psMobName = function(_name) {
@@ -230,10 +256,10 @@ litenBotGlobalParser = function(_master) {
 
     // устанавливаем статус битвы
     self.setInFight = function(_value) {
-        if (self.inFight !== _value) {
+    //    if (self.inFight !== _value) {
             self.inFight = _value;
             self.master.sendMessage("СтатусБитвы", self.inFight);
-        }
+//        }
     }
     //  текст 'сражается с вами'
     self.psFightWithYou = function() {

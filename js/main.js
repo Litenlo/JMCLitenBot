@@ -6,6 +6,8 @@ include("js/litenBotGlobalParserByl.js");
 include("js/litenBotTimers.js");
 include("js/litenBotPrayBot.js");
 include("js/litenBotScenario.js");
+include("js/litenBotScenarioComposer.js");
+
 
 newbot = new litenBotMain();
 
@@ -14,6 +16,7 @@ parserSow = new litenBotGlobalParserSow(newbot);
 timers = new litenBotTimers(newbot);
 praybot = new litenBotPrayBot(newbot);
 scenario = new litenBotScenario(newbot);
+scenarioComposer = new litenBotScenarioComposer(newbot);
 
 // register timer event
 jmc.RegisterHandler("Timer", "timers.onTimer()");

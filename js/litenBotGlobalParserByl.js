@@ -14,14 +14,12 @@ litenBotGlobalParserByl = function(_master) {
     var parentConstructor = self.constructor;
     self.constructor = function() {
 
-        //  вызов родительского конструктора
-        parentConstructor();
-
         //  состояние
         self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, "Состояние");
         self.registerParser(/^(\d+)H (\d+)M (\d+)о (.+)/, self.psFightPrompt, false, self.parseMode.ALWAYS, "СтатусБитвы");
         self.registerParser(/сражается с ВАМИ!/, self.psFightWithYou, false, self.parseMode.ALWAYS, "СражаетсяСВами");
         self.registerParser(/(.+) душа медленно подымается в небеса./, self.psMobRIP, false, self.parseMode.ALWAYS, "РИП");
+
 
         //  ошибки
         self.registerParser(/^Вы не видите цели./, self.psNoAtackMobError, false, self.parseMode.ALWAYS, "ОшибкаНетМобаАгро");
@@ -32,6 +30,9 @@ litenBotGlobalParserByl = function(_master) {
         group = "Комната";
         self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, group);
         self.registerParser(/^\u001b\[1;33m\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.ITEMS, group);
+
+        //  вызов родительского конструктора
+        parentConstructor();
     }
     //  парсинг строки состояния боя
     var parent_psFightPrompt = self.psFightPrompt;

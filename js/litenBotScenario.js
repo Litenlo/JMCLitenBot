@@ -35,6 +35,10 @@ litenBotScenario = function (_master) {
     var mobParseMode = false;
 
     var inFight = false;
+    var onFloor = false;
+    var inSilence = false;
+    var inBlind = false;
+    var isPoisoned = false;
     var waitForLook = false;
     var inSubAction = false;
 
@@ -59,11 +63,16 @@ litenBotScenario = function (_master) {
     self.constructor = function () {
         //  настройки модуля - дефолтные значения будут заменены сохранёнными
         //self.createOption("включен", "нет", "бот включен - да / нет", "string");
+
         self.createOption("дир_сценариев", "data/scenario/", "директория для сценариев", "string");
         self.createOption("тм_бот", "200", "идентификатор таймера бота", "string");
         self.createOption("сч_ждать", "201", "идентификатор таймера для ожидания", "string");
         self.createOption("тм_бот_скор", "1", "скорость бота в десятый долях секунды", "string");
         self.createOption("ком_атак", "к мас.вред", "команда для атаки", "string");
+        self.createOption("ком_встать", "вст", "команда встать", "string");
+        self.createOption("ком_снять_молчу", "перев", "команда для снятия молчи", "string");
+        self.createOption("ком_снять_слепь", "кол слов.свет", "команда для снятия слепи", "string");
+        self.createOption("ком_снять_яд", "кол слов.жиз", "команда для снятия яда", "string");
 
         //  вызов родительского конструктора
         parentConstructor();
@@ -99,13 +108,16 @@ litenBotScenario = function (_master) {
 
         self.registerApi("убреж", /убреж (0|1|2)/, self.setKillMode, "установка режима агресси (0 - нет; 1 - агрит всех; 2 - агрит только мобов и списка выбранной зоны).");
 
-
         self.registerApi("см", /см/, self.look, "(метод для тестирования) получить комнату.");
 
         //  другие методы вызываемые при создании модуля
         self.loadScenarios();
 
         self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
+
+        //  регистрируем сообщения от модуля
+        self.master.addMessage(self, "СценарийЗакончен");
+
     }
 
     //  установка режима агро
@@ -141,13 +153,39 @@ litenBotScenario = function (_master) {
 
     //  посмотреть комнату
     self.doLook = function() {
-        log(waitForLook);
         if (!waitForLook) {
             jmc.parse("смотреть");
             waitForLook = true;
         }
     }
-
+    //  встать
+    self.doStandup = function() {
+        if (onFloor) {
+            jmc.parse(self.getOption("ком_встать"));
+            onFloor = false;
+        }
+    }
+    //  снять молчу
+    self.doSilenceOff = function() {
+        if (inSilence) {
+            jmc.parse(self.getOption("ком_снять_молчу"));
+            inSilence = false;
+        }
+    }
+    //  снять слепь
+    self.doBlindOff = function() {
+        if (inBlind) {
+            jmc.parse(self.getOption("ком_снять_слепь"));
+            inBlind = false;
+        }
+    }
+    //  снять яд
+    self.doPoisonOff = function() {
+        if (isPoisoned) {
+            jmc.parse(self.getOption("ком_снять_яд"));
+            isPoisoned = false;
+        }
+    }
     //  обработка новой комнаты
     self.roomReady = function (_message, _content) {
         currentRoom = _content;
@@ -213,10 +251,45 @@ litenBotScenario = function (_master) {
     //  обработка изменения состояния в битве
     self.inFightChange = function (_message, _content) {
         self.clientOutputNamed("В битве: " + _content);
-        inFight = _content;
-        if (!_content) {
-            //self.removeReceiver("СтатусБитвы");
+        if (inFight != _content) {
+            inFight = _content;
+            if (!_content) {
+                self.doLook();
+            }
+        }
+    }
+    //  чара сбили
+    self.charBash = function(_s) {
+        if (!onFloor) {
+            self.clientOutputNamed("сбили");
+            onFloor = true;
+            self.doStandup();
+        }
+    }
+    //  чара помолчали
+    self.charSilence = function() {
+        if (!inSilence) {
+            self.clientOutputNamed("молча");
+            inSilence = true;
+            self.doSilenceOff();
+        }
+    }
+    //  чара послепили
+    self.charBlind = function() {
+        if (!inBlind) {
+            self.clientOutputNamed("слепь");
+            inBlind = true;
+            waitForLook = false;
+            self.doBlindOff();
             self.doLook();
+        }
+    }
+    //  чара послепили
+    self.charPoison = function() {
+        if (!isPoisoned) {
+            self.clientOutputNamed("яд");
+            isPoisoned = true;
+            self.doPoisonOff();
         }
     }
     //  обработка рипа в комнате
@@ -378,6 +451,10 @@ litenBotScenario = function (_master) {
         self.registerReceiver("ОшибкаНетМобаАгро", self.doLook);
         self.registerReceiver("РИП", self.someoneRIP);
         self.registerReceiver("СражаетсяСВами", self.inFightChange);
+        self.registerReceiver("Сост.баш", self.charBash);
+        self.registerReceiver("Сост.молчание", self.charSilence);
+        self.registerReceiver("Сост.слеп", self.charBlind);
+        self.registerReceiver("Сост.яд", self.charPoison);
 
         if (self.canAct()) {
             self.scenarioNextStep();
@@ -433,6 +510,15 @@ litenBotScenario = function (_master) {
         self.clientOutputNamed("Время: " + secTime + " сек.");
         self.clientOutputNamed("Опыт: " + numberWithSpaces(curScenStat.startExp - curScenStat.curExp) + ", " + ((curScenStat.startExp - curScenStat.curExp) / secTime | 0) + " в секунду");
         self.clientOutputNamed("Монет: " + numberWithSpaces(curScenStat.curCoin - curScenStat.startCoin) + ", " + ((curScenStat.curCoin - curScenStat.startCoin) / secTime | 0) + " в секунду");
+
+        if (self.master.listenersCount("СценарийЗакончен") > 0) {
+            self.master.sendMessage("СценарийЗакончен", {
+                name: curScenario,
+                time: secTime,
+                coin: curScenStat.curCoin - curScenStat.startCoin,
+                exp: curScenStat.startExp - curScenStat.curExp
+            });
+        }
     }
     //  прервать выполнения сценария
     self.scnBreak = function() {
@@ -455,7 +541,10 @@ litenBotScenario = function (_master) {
         self.removeReceiver("ОшибкаНетМобаАгро");
         self.removeReceiver("РИП");
         self.removeReceiver("СражаетсяСВами");
-
+        self.removeReceiver("Сост.баш");
+        self.removeReceiver("Сост.молчание");
+        self.removeReceiver("Сост.слеп");
+        self.removeReceiver("Сост.яд");
 
         self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
     }
@@ -467,7 +556,7 @@ litenBotScenario = function (_master) {
     }
 
     self.canAct = function () {
-        return !inFight && !inSubAction;
+        return !inFight && !inSubAction && !inBlind;
     }
 
     self.command = function (_cmd) {
