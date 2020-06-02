@@ -102,6 +102,8 @@ function gurmParse(_arr) {
     pos++;
     while (_arr[pos] !== "[~end~]") {
         var keyval = _arr[pos].split(gurmDelimiter);
+        keyval[1] = keyval[1] == "false" ? false : keyval[1];
+        keyval[1] = keyval[1] == "true" ? true : keyval[1];
         result[keyval[0]] = keyval[1] !== "[~object~]" ? keyval[1] : gurmParse(_arr);
         pos++;
     }

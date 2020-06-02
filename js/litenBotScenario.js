@@ -71,7 +71,7 @@ litenBotScenario = function (_master) {
         self.createOption("ком_атак", "к мас.вред", "команда дл€ атаки", "string");
         self.createOption("ком_встать", "вст", "команда встать", "string");
         self.createOption("ком_сн€ть_молчу", "перев", "команда дл€ сн€ти€ молчи", "string");
-        self.createOption("ком_сн€ть_слепь", "кол слов.свет", "команда дл€ сн€ти€ слепи", "string");
+        self.createOption("ком_сн€ть_слепь", "кол слов.свет;вз все все.труп", "команда дл€ сн€ти€ слепи", "string");
         self.createOption("ком_сн€ть_€д", "кол слов.жиз", "команда дл€ сн€ти€ €да", "string");
 
         //  вызов родительского конструктора
@@ -117,7 +117,7 @@ litenBotScenario = function (_master) {
 
         //  регистрируем сообщени€ от модул€
         self.master.addMessage(self, "—ценарий«акончен");
-
+        self.master.addMessage(self, "—ценарийƒействие");
     }
 
     //  установка режима агро
@@ -191,6 +191,7 @@ litenBotScenario = function (_master) {
         currentRoom = _content;
         var roomMobs = currentRoom.mobs;
 
+        //log(gurmStringify(roomMobs));
         //  автосбор мобов (дл€ былин не работает)
         if (mobParseMode && roomMobs.length > 0) {
             currentMobIndex = 0;
@@ -200,6 +201,7 @@ litenBotScenario = function (_master) {
                 if (mobs[curScenario][roomMobs[i].trim()] === undefined) {
                     jmc.parse("смотреть " + (i + 2));
                     newMobArray.push(roomMobs[i]);
+                    self.addMob(roomMobs[i], "<заполнить>", "<заполнить>", "и");
                 }
             }
         }
@@ -319,7 +321,7 @@ litenBotScenario = function (_master) {
         /////
         _content.shortName = _content.name.toLowerCase().replace(/\s/g, ".");
         self.clientOutputNamed((currentMobIndex + 1) + " из " + newMobArray.length + ": " + newMobArray[currentMobIndex] + " => " + _content.shortName);
-        self.addMob(newMobArray[currentMobIndex], _content.name, _content.shortName, "и")
+        self.editMob(newMobArray[currentMobIndex], _content.name, _content.shortName, "и")
         currentMobIndex++;
     }
 
@@ -488,6 +490,14 @@ litenBotScenario = function (_master) {
 
         do {
             cmd = scenario[curScenarioPosition];
+
+            if (self.master.listenersCount("—ценарийƒействие") > 0) {
+                self.master.sendMessage("—ценарийƒействие", {
+                    cmd: cmd,
+                    position: curScenarioPosition
+                });
+            }
+
             self.clientOutputNamed("—ценарий '" + curScenario + "' команда: [" + (curScenarioPosition + 1) + " / " + scenario.length + "] " + cmd + ".")
             //self.action("вст");
             self.action(cmd);

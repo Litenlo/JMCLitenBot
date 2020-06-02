@@ -29,6 +29,7 @@ litenBotGlobalParserByl = function(_master) {
         //  room
         group = "Комната";
         self.registerParser(/^(\d+)H (\d+)M (\d+)о .+ (\d+)G (.+)/, self.psPrompt, false, self.parseMode.ALWAYS, group);
+        self.registerParser(/^\u001b\[1;33m(.+)/, self.psItemsStart, true, self.parseMode.DESCEND, group);
         self.registerParser(/^\u001b\[1;33m\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.ITEMS, group);
 
         //  вызов родительского конструктора

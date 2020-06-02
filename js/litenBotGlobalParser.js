@@ -97,7 +97,7 @@ litenBotGlobalParser = function(_master) {
         self.registerParser(/^\u001b\[1;36m(.+)/, self.psRoomName, true, self.parseMode.REGULAR, group);
         self.registerParser(/(.+)/, self.psRoomText, false, self.parseMode.ROOM, group);
         self.registerParser(/^\u001b\[0;36m\[ Exits: (.+) ]/, self.psRoomExits, true, self.parseMode.ROOM, group);
-        self.registerParser(/^\u001b\[1;33m(.+)/, self.psItemsStart, true, self.parseMode.DESCEND, group);
+        //self.registerParser(/^\u001b\[1;33m(.+)/, self.psItemsStart, true, self.parseMode.DESCEND, group);
         self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.ITEMS, group);
         self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.DESCEND, group);
         self.registerParser(/(.+)/, self.psMobInRoom, false, self.parseMode.MOBS, group);
