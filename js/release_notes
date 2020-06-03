@@ -1,5 +1,8 @@
-Global parser (Bylins) 1.0
+Global parser (Bylins) 1.1
 - сбор мобов
+
+Scenario composer v1.1
+- add: настройка времени прерывания сценария - 'прер_тайм'
 
 -------------------
 Liten bot core v1.2

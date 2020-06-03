@@ -17,6 +17,7 @@ litenBotScenarioComposer = function (_master) {
     //  данные по текущему сценарию
     self.scnName = undefined;
     self.cmdCounter = 0;
+    self.idleCounter = 0;
 
 
     //  собственные переменные
@@ -41,6 +42,7 @@ litenBotScenarioComposer = function (_master) {
         self.createOption("файл_статистики_оркестровщика", "data/stat.orh", "файл оркестровщика", "string");
         self.createOption("тм_ск", "300", "идентификатор таймера оркестровщика", "string");
         self.createOption("сц_возврата", "возврат", "сценарий возврата", "string");
+        self.createOption("прер_тайм", "3", "время простоя в минутах при котором сценарий прерывается", "string");
 
         //  вызов родительского конструктора
         parentConstructor();
@@ -206,11 +208,18 @@ litenBotScenarioComposer = function (_master) {
 
         if (self.mode == SC_MODE.RUN) {
             if (self.cmdCounter == 0) {
-                self.clientOutputNamed("таймаут, приостанавливаю сценарий.")
-                self.master.parseInput("лит.сц.прер");
-                self.master.parseInput("лит.сц.выпол " + self.getOption("сц_возврата"));
-                self.scnList[self.scnName].failRunCount++;
-                self.save();
+                var idleCounterMax = Number(self.getOption("прер_тайм"));
+                self.idleCounter++;
+                self.clientOutputNamed("Таймер бездействия " + self.idleCounter + " из " + idleCounterMax + ".")
+                if (self.idleCounter == idleCounterMax) {
+                    self.clientOutputNamed("таймаут, приостанавливаю сценарий.")
+                    self.master.parseInput("лит.сц.прер");
+                    self.master.parseInput("лит.сц.выпол " + self.getOption("сц_возврата"));
+                    self.scnList[self.scnName].failRunCount++;
+                    self.save();
+                }
+            } else {
+                self.idleCounter = 0;
             }
             self.cmdCounter = 0;
             self.stat.runTimer++;
