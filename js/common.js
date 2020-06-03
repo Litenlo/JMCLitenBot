@@ -211,9 +211,8 @@ if (!String.prototype.padStart) {
         targetLength = targetLength>>0; //floor if number or convert non-number to 0;
         padString = String(padString || ' ');
         if (this.length > targetLength) {
-            return String(this);
-        }
-        else {
+            return String(this).substring(0, targetLength);
+        } else {
             targetLength = targetLength-this.length;
             if (targetLength > padString.length) {
                 padString += padString.repeat(targetLength/padString.length); //append to original to ensure we are longer than needed
@@ -228,9 +227,8 @@ if (!String.prototype.padEnd) {
         targetLength = targetLength>>0; //floor if number or convert non-number to 0;
         padString = String(padString || ' ');
         if (this.length > targetLength) {
-            return String(this);
-        }
-        else {
+            return String(this).substring(0, targetLength);
+        } else {
             targetLength = targetLength-this.length;
             if (targetLength > padString.length) {
                 padString += padString.repeat(targetLength/padString.length); //append to original to ensure we are longer than needed

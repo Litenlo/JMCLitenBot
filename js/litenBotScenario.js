@@ -725,13 +725,30 @@ litenBotScenario = function (_master) {
             self.clientOutputNamed("Выберите сценарий.");
             return;
         }
+        var delimiter = "  ";
         self.clientOutputMobuleTitle();
         self.clientOutput("Мобы в сценарий '" + curScenario + "':");
+        self.clientOutput(tab()
+            + "№".padStart(3) + delimiter
+            + "в мире".toString().padEnd(40) + delimiter
+            + "имя".toString().padEnd(20) + delimiter
+            + "алиас".toString().padEnd(20) + delimiter
+            + "опц".toString().padStart(4)
+        );
         var counter = 0;
         for (var disp in mobs[curScenario]) {
             counter++;
             var mob = mobs[curScenario][disp];
-            self.clientOutput(tab() + (counter).toString().padStart(3) + ". [" + mob.option + "] " + disp + " | " + mob.real + " | " + mob.shortName);
+
+            self.clientOutput(tab()
+                + (counter).toString().padStart(3) + delimiter
+                + disp.toString().padEnd(40) + delimiter
+                + mob.real.toString().padEnd(20) + delimiter
+                + mob.shortName.toString().padEnd(20) + delimiter
+                + mob.option.toString().padStart(3)
+            );
+
+            //self.clientOutput(tab() + (counter).toString().padStart(3) + ". [" + mob.option + "] " + disp + " | " + mob.real + " | " + mob.shortName);
         }
     }
 
