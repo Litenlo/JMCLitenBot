@@ -101,7 +101,7 @@ litenBotScenario = function (_master) {
         self.registerApi("мстоп", /мстоп/, self.mobCollectStop, "отключает режим автоматического сбора данных о мобах.");
         self.registerApi("мдоб", /мдоб (.+) == (.+), (.+), (и|у)/, self.addMob, "добавить нового моба.");
         self.registerApi("муд", /муд (.+)/, self.deleteMob, "удалить моба.");
-        self.registerApi("мизм", /мизм (.+) == (.+), (.+), (и|у)/, self.editMob, "редактирование моба.");
+        self.registerApi("мизм", /мизм (.+) == (.+), (.+), (и|у)/, self.editMob, "редактирование моба по имени или номеру в списке. мизм (все / отображаемое название моба / номер в списке) == ПОЛНОЕ_ИМЯ_МОБА, АЛИАС_ДЛЯ_АТАКИ, (y - агрить / и - игнорить). Пример. лит.сц.мизм 2 == Слон великан, слон, у - изменит моба с номером 2.");
         self.registerApi("мопц", /мопц (.+) == (и|у)/, self.mobOptions, "настройки моба. мопц (все / отображаемое название моба / номер в списке) == (y - агрить / и - игнорить). Пример: лит.сц.мопц все == у - установит всем мобам в выбранном сценарии опции у (агрить).");
         self.registerApi("мспис", /мспис/, self.mobList, "список мобов выбранной зоны.");
         self.registerApi("мочис", /мочис/, self.clearMobList, "очищает список мобов выбранной зоны.");
@@ -349,10 +349,13 @@ litenBotScenario = function (_master) {
             self.clientOutputNamed("Выберите сценарий для добавления моба.");
             return;
         }
-        if (mobs[curScenario][_disp] === undefined) {
+        if ((isNaN(Number(_disp)) || Number(_disp) > mobs[curScenario].length) && mobs[curScenario][_disp] === undefined) {
             self.clientOutputNamed("В сценарии '" + curScenario + "' нет моба '" + _disp + "'.")
             return;
         }
+
+        _disp = self.mobGetName(_disp);
+
         mobs[curScenario][_disp] = {real: _real, shortName: _shortName, option: _option};
         self.saveScenario(curScenario);
         self.clientOutputNamed("В сценарии '" + curScenario + "' изменён моб '" + _disp + "'.")

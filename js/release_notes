@@ -3,6 +3,7 @@ Global parser (Bylins) 1.1
 
 Scenario composer v1.1
 - add: настройка времени прерывания сценария - 'прер_тайм'
+- add: изменение моба по номеру в списке
 
 -------------------
 Liten bot core v1.2
