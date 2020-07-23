@@ -25,7 +25,8 @@ function color(color, bgcolor) {
 }
 
 function removeColor(_text) {
-	return _text.replace(/\[\d?[;\d]+m/g,"");
+    //return _text.replace(/\[\d?[;\d]+m/g,"");
+    return _text.replace(/\u001b\[\d?[;\d]+m/g,"");
 }
 
 function tab() {
@@ -104,6 +105,7 @@ function gurmParse(_arr) {
         var keyval = _arr[pos].split(gurmDelimiter);
         keyval[1] = keyval[1] == "false" ? false : keyval[1];
         keyval[1] = keyval[1] == "true" ? true : keyval[1];
+        keyval[1] = keyval[1] == "undefined" ? undefined : keyval[1];
         result[keyval[0]] = keyval[1] !== "[~object~]" ? keyval[1] : gurmParse(_arr);
         pos++;
     }

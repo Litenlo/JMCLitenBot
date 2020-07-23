@@ -39,10 +39,14 @@ litenBotScenario = function (_master) {
     var inSilence = false;
     var inBlind = false;
     var isPoisoned = false;
-    var waitForLook = false;
+    var isExpDrain = false;
+    //var waitForLook = false;
     var inSubAction = false;
+    var fightSpellCounter = 0;
 
-    var currentRoom = {};
+    var currentRoom = undefined;
+
+    var __tmpConvertScn = false;
 
     var curScenStat = {
         startExp: 0,
@@ -67,12 +71,16 @@ litenBotScenario = function (_master) {
         self.createOption("дир_сценариев", "data/scenario/", "директория для сценариев", "string");
         self.createOption("тм_бот", "200", "идентификатор таймера бота", "string");
         self.createOption("сч_ждать", "201", "идентификатор таймера для ожидания", "string");
-        self.createOption("тм_бот_скор", "1", "скорость бота в десятый долях секунды", "string");
+        self.createOption("сч_закл", "202", "идентификатор таймера для атакующих заклинаний", "string");
+        self.createOption("закл_спис", "ул;к мас.вред;к тем.рит;к мас.сле;к мас.вред;к мас.вред;к мас.вред", "список заклинаний для атаки", "string");
+        self.createOption("авто_закл", "да", "автоматическое использование заклинаний", "string");
+        self.createOption("тм_бот_скор", "1", "скорость бота в десятый долях секунды (устаревшее)", "string");
         self.createOption("ком_атак", "к мас.вред", "команда для атаки", "string");
         self.createOption("ком_встать", "вст", "команда встать", "string");
         self.createOption("ком_снять_молчу", "перев", "команда для снятия молчи", "string");
         self.createOption("ком_снять_слепь", "кол слов.свет;вз все все.труп", "команда для снятия слепи", "string");
         self.createOption("ком_снять_яд", "кол слов.жиз", "команда для снятия яда", "string");
+        self.createOption("ком_снять_укр_душу", "вз колб.ос рюк;осуш колб.ос;пол колб.ос рюк", "команда для снятия украсть душу", "string");
 
         //  вызов родительского конструктора
         parentConstructor();
@@ -87,14 +95,16 @@ litenBotScenario = function (_master) {
         self.registerApi("показ", /показ/, self.scnShow, "показать команды текущего сценария.");
         self.registerApi("удал", /удал (\S+)/, self.del, "удалить сценарий. Подтверждение не запрашивается. Файл сценария не удаляется.");
         self.registerApi("выпол", /выпол (\S+)/, self.scnRun, "выполнить сценарий. сц.выпол НАЗВАНИЕ_СЦЕНАРИЯ. Пример: лит.сц.выпол школа - запустит сценарий с названием 'школа'");
-        self.registerApi("кдоб", /кдоб (\d+)?(.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА (НОМЕР_В_СПИСКЕ - не обязательный). Пример: лит.сц.кдоб 10 уд капитан - добавит команду 'уд капитан' в сценарий на 10 позицию.");
+        self.registerApi("кдоб", /кдоб (\d+)?(.+) == (.+), (.+)/, self.cmdAdd, "добавить команду в сценарий. кдоб НОМЕР_В_СПИСКЕ КОМАНДА == НАЗВАНИЕ_КОМНАТЫ, ХЕШ_КОМНАТЫ (НОМЕР_В_СПИСКЕ - не обязательный, НАЗВАНИЕ_КОМНАТЫ и ХЕШ_КОМНАТЫ - может быть 'нет'). Пример: лит.сц.кдоб 10 уд капитан == нет, нет - добавит команду 'уд капитан' в сценарий на 10 позицию.");
         self.registerApi("кудал", /кудал (\S+)/, self.cmdDel, "удалить команду из сценария. кудал НОМЕР_В_СПИСКЕ. Пример: лит.сц.кудал 10 - удалит из сценария команду с номером 10.");
-        self.registerApi("кзам", /кзам (\d+) (.+)/, self.cmdChange, "заменить команду под определённым номером. кзам НОМЕР_В_СПИСКЕ КОМАНДА. Пример: лит.сц.кзам 10 обл создать +2 - заменит команду под номером 10 на 'обл создать +2'.");
+        self.registerApi("кзам", /кзам (\d+) (.+) == (.+), (.+)/, self.cmdChange, "заменить команду под определённым номером. кзам НОМЕР_В_СПИСКЕ КОМАНДА == НАЗВАНИЕ_КОМНАТЫ, ХЕШ_КОМНАТЫ. Пример: лит.сц.кзам 10 обл создать +2 - заменит команду под номером 10 на 'обл создать +2'.");
         self.registerApi("прер", /прер/, self.scnBreak, "прерывает выполнения сценария. Пример: лит.сц.прер");
         self.registerApi("котм", /котм/, self.cmdUndo, "удаляет последнюю команду в режиме создания сценария.");
 
         self.registerApi("жд", /жд (\S+)/, self.botWait, "пауза в сценарии - значение * тм_бот_скор.");
         self.registerApi("тик", /тик/, self.tick, "тик бота.");
+        self.registerApi("сч_закл_тик", /сч_закл_тик/, self.tickFightBot, "тик бота.");
+
 
         //  работа с мобами
         self.registerApi("мстарт", /мстарт/, self.mobCollectStart, "запускает режим автоматического сбора данных о мобах.");
@@ -120,6 +130,17 @@ litenBotScenario = function (_master) {
         self.master.addMessage(self, "СценарийДействие");
     }
 
+    //  структура команды
+    self.cmdStruct = function(_cmd, _roomName, _roomHash) {
+        return {
+            cmd: _cmd,
+            room: {
+                name: (_roomName === undefined ? "нет" : _roomName) ,
+                hash: (_roomHash === undefined ? "нет" : _roomHash)
+            }
+        };
+    }
+
     //  установка режима агро
     self.setKillMode = function (_mode) {
         killMode = _mode;
@@ -135,7 +156,7 @@ litenBotScenario = function (_master) {
 
         self.clientOutputMobuleTitle("Записываются мобы для сценария '" + curScenario + "'.");
 
-        self.registerReceiver("Комната", self.roomReady);
+        //self.registerReceiver("Комната", self.roomReady);
         self.registerReceiver("Моб", self.mobReady);
 
         mobParseMode = true;
@@ -143,7 +164,7 @@ litenBotScenario = function (_master) {
 
     //  отключает режим автоматического сбора данных о мобах
     self.mobCollectStop = function () {
-        self.removeReceiver("Комната");
+        //self.removeReceiver("Комната");
         self.removeReceiver("Моб");
 
         self.clientOutputMobuleTitle("Запись мобов для сценария '" + curScenario + "' закончена.");
@@ -153,10 +174,11 @@ litenBotScenario = function (_master) {
 
     //  посмотреть комнату
     self.doLook = function() {
-        if (!waitForLook) {
-            jmc.parse("смотреть");
-            waitForLook = true;
-        }
+        jmc.parse("смотреть");
+        // if (!waitForLook) {
+        //     jmc.parse("смотреть");
+        //     waitForLook = true;
+        // }
     }
     //  встать
     self.doStandup = function() {
@@ -177,6 +199,13 @@ litenBotScenario = function (_master) {
         if (inBlind) {
             jmc.parse(self.getOption("ком_снять_слепь"));
             inBlind = false;
+        }
+    }
+    //  снять украсть опыт
+    self.doExpDrainOff = function() {
+        if (isExpDrain) {
+            jmc.parse(self.getOption("ком_снять_укр_душу"));
+            isExpDrain = false;
         }
     }
     //  снять яд
@@ -206,16 +235,14 @@ litenBotScenario = function (_master) {
             }
         }
 
-        if (!waitForLook) {
-            return;
-        }
-        waitForLook = false;
+        // if (!waitForLook) {
+        //     return;
+        // }
+        // waitForLook = false;
 
 
         //  обработка режима "агрит всех"
         if (parseInt(killMode) === KILL_MODE.KILLALL) {
-            //  todo: не обязательно будет видно строку статуса, иногда килл а один раунд
-            //log(gurmStringify(_content));
             if (roomMobs.length > 0) {
                 self.killMob(0);
                 return;
@@ -252,11 +279,16 @@ litenBotScenario = function (_master) {
 
     //  обработка изменения состояния в битве
     self.inFightChange = function (_message, _content) {
-        self.clientOutputNamed("В битве: " + _content);
         if (inFight != _content) {
+            self.clientOutputNamed("В битве: " + _content);
             inFight = _content;
-            if (!_content) {
+            if (!inFight) {
+                jmc.parse("очистить");
+                jmc.parse("вст");
                 self.doLook();
+            }
+            if (inFight) {
+                fightSpellCounter = 0;
             }
         }
     }
@@ -281,9 +313,17 @@ litenBotScenario = function (_master) {
         if (!inBlind) {
             self.clientOutputNamed("слепь");
             inBlind = true;
-            waitForLook = false;
+            //waitForLook = false;
             self.doBlindOff();
             self.doLook();
+        }
+    }
+    //  у чара украли душу
+    self.charExpDrain = function() {
+        if (!isExpDrain) {
+            self.clientOutputNamed("украли душу");
+            isExpDrain = true;
+            self.doExpDrainOff();
         }
     }
     //  чара послепили
@@ -296,7 +336,8 @@ litenBotScenario = function (_master) {
     }
     //  обработка рипа в комнате
     self.someoneRIP = function(_s) {
-        self.doLook();
+        //self.doLook();
+        self.inFightChange("none", true);
     }
 
     self.killMob = function (_name) {
@@ -305,7 +346,7 @@ litenBotScenario = function (_master) {
         }
         self.clientOutputNamed("Атакую моба '" + _name + "'");
 
-        self.inFightChange("none", true);
+        //self.inFightChange("none", true);
 
         jmc.parse(self.getOption("ком_атак") + " " + (_name));
     }
@@ -460,12 +501,14 @@ litenBotScenario = function (_master) {
         self.registerReceiver("Сост.молчание", self.charSilence);
         self.registerReceiver("Сост.слеп", self.charBlind);
         self.registerReceiver("Сост.яд", self.charPoison);
+        self.registerReceiver("Сост.укр.душу", self.charExpDrain);
 
         if (self.canAct()) {
             self.scenarioNextStep();
         }
 
         self.master.parseInput("лит.таймер.создать " + self.getOption("тм_бот") + " " + self.getOption("тм_бот_скор") + " ~лит.сц.тик");
+        self.master.parseInput("лит.таймер.создать " + self.getOption("сч_закл") + " 25 ~лит.сц.сч_закл_тик");
     }
 
     self.tick = function () {
@@ -480,6 +523,15 @@ litenBotScenario = function (_master) {
         }
     }
 
+    self.tickFightBot = function() {
+        if (mode == SC_MODE.RUN && inFight && self.getOption("авто_закл") === "да") {
+            var spells = self.getOption("закл_спис").split(";");
+            fightSpellCounter++;
+            fightSpellCounter = fightSpellCounter > spells.length ? 2 : fightSpellCounter;
+            self.action("" + spells[fightSpellCounter - 1]);
+        }
+    }
+
     self.scenarioRollBackStep = function() {
         curScenarioPosition--;
         var scenario = scenarios[curScenario];
@@ -489,10 +541,17 @@ litenBotScenario = function (_master) {
 
     self.scenarioNextStep = function () {
         var scenario = scenarios[curScenario];
-        var cmd = "";
 
-        do {
-            cmd = scenario[curScenarioPosition];
+        var commandInfo = scenario[curScenarioPosition];
+        var cmd = commandInfo.cmd;
+        var roomCmd = false;
+
+        while (!roomCmd && curScenarioPosition < scenario.length && (commandInfo.room.hash === "нет" || (currentRoom !== undefined && (commandInfo.room.hash === currentRoom.hash || __tmpConvertScn)))) {
+
+            if (__tmpConvertScn && currentRoom !== undefined) {
+                scenarios[curScenario][curScenarioPosition].room.name = currentRoom.name;
+                scenarios[curScenario][curScenarioPosition].room.hash = currentRoom.hash;
+            }
 
             if (self.master.listenersCount("СценарийДействие") > 0) {
                 self.master.sendMessage("СценарийДействие", {
@@ -502,11 +561,18 @@ litenBotScenario = function (_master) {
             }
 
             self.clientOutputNamed("Сценарий '" + curScenario + "' команда: [" + (curScenarioPosition + 1) + " / " + scenario.length + "] " + cmd + ".")
-            //self.action("вст");
             self.action(cmd);
-            waitForLook = !self.instantAction(cmd);
+
+            roomCmd = !self.instantAction(cmd);
+
             curScenarioPosition++;
-        } while (self.instantAction(cmd) && curScenarioPosition < scenario.length);
+
+            if (curScenarioPosition < scenario.length) {
+                commandInfo = scenario[curScenarioPosition];
+                cmd = commandInfo.cmd;
+            }
+        }
+        //waitForLook = true;
 
         if (curScenarioPosition >= scenario.length) {
             self.scnFinish();
@@ -558,14 +624,16 @@ litenBotScenario = function (_master) {
         self.removeReceiver("Сост.молчание");
         self.removeReceiver("Сост.слеп");
         self.removeReceiver("Сост.яд");
+        self.removeReceiver("Сост.укр.душу");
 
         self.master.parseInput("лит.таймер.удалить " + self.getOption("тм_бот"));
+        self.master.parseInput("лит.таймер.удалить " + self.getOption("сч_закл"));
     }
 
     //  требует ли команда получение ввода
     self.instantAction = function(_action) {
         //log(!regexp(notInstantActionRX, _action));
-        return !regexp(notInstantActionRX, _action);
+        return !(regexp(notInstantActionRX, _action) || _action.charAt(0) === "'");
     }
 
     self.canAct = function () {
@@ -604,13 +672,14 @@ litenBotScenario = function (_master) {
     }
 
     //  сохраняет сценарий
-    self.saveScenario = function (_name) {
+    self.saveScenario = function (_name, _fileName) {
+        _fileName = (_fileName === undefined ? _name : _fileName);
         if (scenarios[_name] === undefined) {
             self.clientOutputNamed("Сценарий '" + _name + "' не существует.");
             return;
         }
-        writeObjToFile(self.getOption("дир_сценариев") + _name + ".scn", scenarios[_name]);
-        writeObjToFile(self.getOption("дир_сценариев") + _name + ".mob", mobs[_name]);
+        writeObjToFile(self.getOption("дир_сценариев") + _fileName + ".scn", scenarios[_name]);
+        writeObjToFile(self.getOption("дир_сценариев") + _fileName + ".mob", mobs[_name]);
     }
 
     //  загружает сценарий
@@ -618,7 +687,11 @@ litenBotScenario = function (_master) {
         var result = [];
         wd = readObjectFromFile(self.getOption("дир_сценариев") + _name + ".scn");
         for (var ind in wd) {
-            result.push(wd[ind]);
+            var cmd = wd[ind];
+            if (typeof cmd === "string") {
+                cmd = self.cmdStruct(cmd, undefined, undefined);
+            }
+            result.push(cmd);
         }
         return result;
     }
@@ -652,29 +725,39 @@ litenBotScenario = function (_master) {
             return;
         }
 
+        self.registerReceiver("Комната", self.roomReady);
+
+        currentRoom = undefined;
+
         scenarios[_name] = [];
         mobs[_name] = [];
         self.select(_name);
         self.clientOutputMobuleTitle("Сценарий '" + _name + "' записывается.");
         mode = SC_MODE.CREATE;
 
-        self.saveScenarios()
+        self.saveScenarios();
+
+        self.doLook();
+        self.cmdAdd("", "смотреть", "нет", "нет");
     }
 
     self.stop = function () {
         self.clientOutputNamed("Сценарий '" + curScenario + "' завершён. Действий в сценарии - " + scenarios[curScenario].length + ".");
+        self.removeReceiver("Комната");
+
         mode = SC_MODE.READY;
         curScenario = undefined;
     }
 
 
-    self.cmdAdd = function (_pos, _command) {
+    self.cmdAdd = function (_pos, _command, _roomName, _roomHash) {
         if (curScenario === undefined) {
             self.clientOutputNamed("Выберите сценарий для добавления команды.");
             return;
         }
 
         _command = _command.trim();
+        _command = self.cmdStruct(_command, _roomName, _roomHash);
 
         if (_pos === "") {
             scenarios[curScenario].push(_command)
@@ -682,11 +765,11 @@ litenBotScenario = function (_master) {
             scenarios[curScenario].splice(_pos - 1, 0, _command)
         }
         self.saveScenario(curScenario);
-        self.clientOutputNamed("В сценарий '" + curScenario + "' добавлена команда '" + _command + "'.");
+        self.clientOutputNamed("В сценарий '" + curScenario + "' добавлена команда '" + _command.cmd + "'.");
     }
 
     //  изменяет команду под номером
-    self.cmdChange = function(_pos, _command) {
+    self.cmdChange = function(_pos, _command, _roomName, _roomHash) {
         if (curScenario === undefined) {
             self.clientOutputNamed("Выберите сценарий для добавления команды.");
             return;
@@ -696,10 +779,11 @@ litenBotScenario = function (_master) {
 
         var _oldCommand = scenarios[curScenario][_pos];
         _command = _command.trim();
+        _command = self.cmdStruct(_command, _roomName, _roomHash);
         scenarios[curScenario][_pos] = _command;
 
         self.saveScenario(curScenario);
-        self.clientOutputNamed("В сценарий '" + curScenario + "' изменена команда [" + (_pos + 1) + "] '" + _oldCommand + "' на '" + _command + "'.");
+        self.clientOutputNamed("В сценарий '" + curScenario + "' изменена команда [" + (_pos + 1) + "] '" + _oldCommand.cmd + "' на '" + _command.cmd + "'.");
     }
 
     //  удаляет команду из сценария
@@ -716,7 +800,7 @@ litenBotScenario = function (_master) {
         var cmd = scenarios[curScenario][_pos - 1];
         scenarios[curScenario].splice(_pos - 1, 1);
         self.saveScenario(curScenario);
-        self.clientOutputNamed("В сценарий '" + curScenario + "' удалена команда с номером '" + _pos + "' ('" + cmd + "').");
+        self.clientOutputNamed("В сценарий '" + curScenario + "' удалена команда с номером '" + _pos + "' ('" + cmd.cmd + "').");
     }
 
     // список мобов в сценарии
@@ -730,7 +814,7 @@ litenBotScenario = function (_master) {
         self.clientOutput("Мобы в сценарий '" + curScenario + "':");
         self.clientOutput(tab()
             + "№".padStart(3) + delimiter
-            + "в мире".toString().padEnd(40) + delimiter
+            + "в мире".toString().padEnd(50) + delimiter
             + "имя".toString().padEnd(20) + delimiter
             + "алиас".toString().padEnd(20) + delimiter
             + "опц".toString().padStart(4)
@@ -742,7 +826,7 @@ litenBotScenario = function (_master) {
 
             self.clientOutput(tab()
                 + (counter).toString().padStart(3) + delimiter
-                + disp.toString().padEnd(40) + delimiter
+                + disp.toString().padEnd(50) + delimiter
                 + mob.real.toString().padEnd(20) + delimiter
                 + mob.shortName.toString().padEnd(20) + delimiter
                 + mob.option.toString().padStart(3)
@@ -764,18 +848,42 @@ litenBotScenario = function (_master) {
         }
         self.clientOutputMobuleTitle();
         self.clientOutput("Сценарий '" + curScenario + "':");
-        var counter = 0;
-        var str = "";
-        for (var i = 0; i < scenarios[curScenario].length; i++) {
+        // var counter = 0;
+        // var str = "";
+        // for (var i = 0; i < scenarios[curScenario].length; i++) {
+        //
+        //     str = str + ((i + 1).toString().padStart(comPre) + ". " + scenarios[curScenario][i].cmd).padEnd(comLen);
+        //     counter++;
+        //     if (counter === comInLine || i + 1 === scenarios[curScenario].length) {
+        //         self.clientOutput(tab() + str);
+        //         str = "";
+        //         counter = 0;
+        //     }
+        // }
 
-            str = str + ((i + 1).toString().padStart(comPre) + ". " + scenarios[curScenario][i]).padEnd(comLen);
+        var delimiter = "  ";
+
+        self.clientOutput(tab()
+            + "№".padStart(3) + delimiter
+            + "команда".toString().padEnd(50) + delimiter
+            + "комната".toString().padEnd(40) + delimiter
+            + "номер".toString().padEnd(10)
+        );
+        var counter = 0;
+        for (var i = 0; i < scenarios[curScenario].length; i++) {
             counter++;
-            if (counter === comInLine || i + 1 === scenarios[curScenario].length) {
-                self.clientOutput(tab() + str);
-                str = "";
-                counter = 0;
-            }
+            var cmdInfo = scenarios[curScenario][i];
+
+            self.clientOutput(tab()
+                + (counter).toString().padStart(3) + delimiter
+                + cmdInfo.cmd.toString().padEnd(50) + delimiter
+                + cmdInfo.room.name.padEnd(40) + delimiter
+                + cmdInfo.room.hash.padEnd(10)
+            );
+
+            //self.clientOutput(tab() + (counter).toString().padStart(3) + ". [" + mob.option + "] " + disp + " | " + mob.real + " | " + mob.shortName);
         }
+
     }
     //  bot command section
     self.botWait = function (_time) {
@@ -799,7 +907,7 @@ litenBotScenario = function (_master) {
             return null;
         }
         if (mode === SC_MODE.CREATE) {
-            self.cmdAdd("", _text);
+            self.cmdAdd("", _text, currentRoom === undefined ? undefined : currentRoom.name, currentRoom === undefined ? undefined : currentRoom.hash);
             if (_text.charAt(0) === "~") {
                 _text = "";
             }

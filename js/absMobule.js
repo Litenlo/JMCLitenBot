@@ -156,7 +156,7 @@ absModule = function(_master) {
             if (action.charAt(0) === "~") {
                 self.master.parseInput(action.substr(1));
             } else {
-                jmc.parse(action);
+                jmc.parse(action.charAt(0) === "'" ? action.substr(1) : action);
             }
         } else {
             action();

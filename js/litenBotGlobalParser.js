@@ -83,8 +83,9 @@ litenBotGlobalParser = function(_master) {
 
         self.registerParser(/(^Вам лучше встать на ноги!)|(^Вы упали.)|(^Вы полетели на землю от мощного)|(сбил вас с ног!$)|(поставил вам подножку, и вы упали!$)/, self.psCharBash, false, self.parseMode.ALWAYS, "Сост.баш");
         self.registerParser(/^Вы потеряли способность разговаривать./, self.psCharSilence, false, self.parseMode.ALWAYS, "Сост.молчание");
-        self.registerParser(/(^Вы ослепли!)|(^Раскаленное пламя обожгло ваши глаза!)/, self.psCharBlind, false, self.parseMode.ALWAYS, "Сост.слеп");
+        self.registerParser(/(^Вы ослепли!)|(^Раскаленное пламя обожгло ваши глаза!)|(^Здесь темно...)/, self.psCharBlind, false, self.parseMode.ALWAYS, "Сост.слеп");
         self.registerParser(/^Вы забились в судорогах./, self.psCharPoison, false, self.parseMode.ALWAYS, "Сост.яд");
+        self.registerParser(/^Вы потеряли часть своей жизненой силы и опыта./, self.psExpDrain, false, self.parseMode.ALWAYS, "Сост.укр.душу");
 
         //  ошибки
         self.registerParser(/^Не получится! Вы сражаетесь за свою жизнь!/, self.psFightMoveError, false, self.parseMode.ALWAYS, "ОшибкаДвиженияБоя");
@@ -94,14 +95,14 @@ litenBotGlobalParser = function(_master) {
         //  room
         group = "Комната";
         //self.registerParser(/^(\d+)H (\d+)M (\d+)V (\d+)+(M?)X (\d+)[C|С] (.+)/, self.psPrompt, false, parseMode.ALWAYS, group);
-        self.registerParser(/^\u001b\[1;36m(.+)/, self.psRoomName, true, self.parseMode.REGULAR, group);
-        self.registerParser(/(.+)/, self.psRoomText, false, self.parseMode.ROOM, group);
-        self.registerParser(/^\u001b\[0;36m\[ Exits: (.+) ]/, self.psRoomExits, true, self.parseMode.ROOM, group);
         //self.registerParser(/^\u001b\[1;33m(.+)/, self.psItemsStart, true, self.parseMode.DESCEND, group);
-        self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.ITEMS, group);
+        //self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.ITEMS, group);
         self.registerParser(/^\u001b\[1;31m(.+)/, self.psMobsStart, true, self.parseMode.DESCEND, group);
         self.registerParser(/(.+)/, self.psMobInRoom, false, self.parseMode.MOBS, group);
         self.registerParser(/(.+)/, self.psItemInRoom, false, self.parseMode.ITEMS, group);
+        self.registerParser(/^\u001b\[0;36m\[ Exits: (.+) ]/, self.psRoomExits, true, self.parseMode.ROOM, group);
+        self.registerParser(/(.+)/, self.psRoomText, false, self.parseMode.ROOM, group);
+        self.registerParser(/^\u001b\[1;36m(.+)/, self.psRoomName, true, self.parseMode.REGULAR, group);
 
         //  mob
         group = "Моб";
@@ -122,6 +123,7 @@ litenBotGlobalParser = function(_master) {
         self.master.addMessage(self, "Сост.молчание");
         self.master.addMessage(self, "Сост.слеп");
         self.master.addMessage(self, "Сост.яд");
+        self.master.addMessage(self, "Сост.укр.душу");
 
         //  регистрируем события
         self.registerTransition(self.parseMode.DESCEND, self.parseMode.REGULAR, self.transitionRoomEnd);
@@ -195,6 +197,10 @@ litenBotGlobalParser = function(_master) {
     self.psCharBash = function() {
         self.master.sendMessage("Сост.баш", true);
     }
+    //  parse exp drain string
+    self.psExpDrain = function() {
+        self.master.sendMessage("Сост.укр.душу", true);
+    }
     //  mob self.parsers
     self.psMobName = function(_name) {
         self.setMode(self.parseMode.MOB);
@@ -216,7 +222,7 @@ litenBotGlobalParser = function(_master) {
     self.psRoomName = function(_name) {
         self.setMode(self.parseMode.ROOM);
         self.currentRoom.reset();
-        self.currentRoom.name = _name;
+        self.currentRoom.name = removeColor(_name);
     }
 
     self.psRoomText = function(_desc) {
@@ -246,8 +252,10 @@ litenBotGlobalParser = function(_master) {
 
     self.psRoomExits = function(_exits) {
         self.setMode(self.parseMode.DESCEND);
+        _exits = _exits.replace(/[^ A-Za-zА-Яа-яЁё]/g, "");
         self.currentRoom.exits = _exits.split(" ");
-        self.currentRoom.hash = self.currentRoom.description.hash();
+        self.currentRoom.hash = jmc.getVar("msdpRoomVnum");//(self.currentRoom.name + self.currentRoom.description + _exits).hash();
+        log(self.currentRoom.hash);
     }
 
     self.psEmpty = function() {

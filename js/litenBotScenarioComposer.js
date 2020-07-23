@@ -135,7 +135,6 @@ litenBotScenarioComposer = function (_master) {
     //  показывает список текущих сценариев
     self.scnShow = function () {
         self.clientOutputMobuleTitle();
-        self.clientOutput("Время активности / простоя: " + self.stat.runTimer + " / " + self.stat.idleTimer);
         self.clientOutput("Сценарии:");
         self.clientOutput(tab()
             + "сценарий".padEnd(20)
@@ -147,8 +146,12 @@ litenBotScenarioComposer = function (_master) {
             + "прох".toString().padStart(9)
             + "ошиб".toString().padStart(9)
         );
+
+        var totalCoin = 0;
+
         for (var key in self.scnList) {
             var scn = self.scnList[key];
+            totalCoin = totalCoin + (Number(scn.coin) > 0 ? Number(scn.coin) : 0);
             self.clientOutput(tab()
                 + scn.name.padEnd(20)
                 + scn.enabled.toString().padStart(7)
@@ -160,6 +163,9 @@ litenBotScenarioComposer = function (_master) {
                 + scn.failRunCount.toString().padStart(9)
             );
         }
+        self.clientOutput("Время активности / простоя: " + self.stat.runTimer + " / " + self.stat.idleTimer);
+        self.clientOutput("Мон/c в активности / в общем: " + (totalCoin / (self.stat.runTimer * 60) | 0) + " / " + (totalCoin / ((Number(self.stat.runTimer) + Number(self.stat.idleTimer)) * 60) | 0));
+        self.clientOutput("Монет: " + numberWithSpaces(totalCoin));
     }
 
     //  сбросить таймеры зон
